@@ -1,0 +1,25 @@
+body{
+	font-family: arial;
+	font-size: 12pt;
+	padding: 0;
+	margin: 0;
+	background: black;
+}
+label{
+	color: white;
+}
+.button_submit{
+		border: 2px solid grey;
+}
+footer{
+	position: absolute;
+    bottom: 0;
+    height: 2em;
+    width: calc(100% - 1em);
+    background: #777;
+    color: #fff;
+    font-family: arial;
+    font-size: 10pt;
+    line-height: 2em;
+    padding-left: 1em;
+}
