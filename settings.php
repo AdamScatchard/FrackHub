@@ -37,7 +37,7 @@ $home_page = "home_page.php";
 // login expire
 
 $cookie_time = time() + 3600;
-
+$login_cookie = "frackhub";
 
 
 // Email Settings (Future use for email validation)
