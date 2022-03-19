@@ -18,17 +18,17 @@
 
 		// check for existing login:
 
-		if (isset($_COOKIE['frachub'])){
+		if (isset($_COOKIE[$login_cookie])){
 
-			$uid = $_COOKIE['frachub'];
+			$uid = $_COOKIE[$login_cookie];
 
 			if ($uid > 0){
 
 			// reset cookie length
 
-				setcookie("frachub", $uid, $cookie_time);
+				setcookie($login_cookie, $uid, $cookie_time);
 
-				$user = $db->query("fh_users", "id=" . $uid, false, NULL);
+				$user = $db->query("fh_users", NULL, "id = '" . $uid . "'", true);
 
 			}
 
@@ -57,6 +57,7 @@
 		$visiting_page = $inc_dir . "no_db.php";	
 
 	}
+
 
 
 ?>
