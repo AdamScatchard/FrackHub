@@ -8,7 +8,7 @@
 
 		if ($results[0]["password"] == $_POST['password']) {
 
-			setcookie("frachub", $results[0]['id'] , $cookie_time);
+			setcookie($login_cookie, $results[0]['id'] , $cookie_time);
 
 			header ("location:?page=members_home");
 
@@ -113,3 +113,4 @@
         }
 
 	?>
+
