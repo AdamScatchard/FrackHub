@@ -2,13 +2,14 @@
 
 echo "<h1>Logout</h1>";
 
-if (isset($_COOKIE["frachub"])){
+if (isset($_COOKIE[$login_cookie])){
 
-	setcookie("frachub", "", time()-3600);
+	setcookie($login_cookie, "", time()-3600);
 
 }
 
 // developed by Adam MacKay 2000418 - 14/03/22
+
 
 
 ?>
