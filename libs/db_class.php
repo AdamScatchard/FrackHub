@@ -16,7 +16,35 @@
 
 	it is intended to assist with db interactions in a more simplistic method to get the project going.
 
-	Should there become a need, then please contact me to develop the code for more precise please contact myself (Adam M)
+	Should there become a need, then pleaase contact me to develop the code for more precise please contact myself (Adam M)
+
+	
+
+	[Change log]
+
+	Version 1.0:
+
+		Connection to the database, close database methods added, with options to insert a row and dlete
+
+	Version 1.1
+
+		This version release saw an update, display error, drop and clear methods implements, The file also became a class object, thus no longer
+
+		just a set of methods called but allowing to use $db->methodName()
+
+	Version 1.2
+
+		About was added that results an array of values, the most useful is version number which can help developers identify is a new version has been released since their last
+
+		work and thus if changes made abort scripts. ie if version!=1.2 or if version <=1.2 then do x y z, close was also renames, to disconnect 
+
+	Version 1.3
+
+		getRow was introduced to return a single entry, this is more relevant for username checks or retrieving an advert rather than a cluster of adverts
+
+	Version 1.4
+
+		activitylog this version saw the introduction of activity logging 
 
 */
 
@@ -28,13 +56,31 @@ class db{
 
 	private $settings_ok = false;
 
-	
+	private function getUID(){
+
+    	if (isset($GLOBALS['uid'])){
+
+    	    $uid=$GLOBALS['uid'];
+
+    	    
+
+    	}else{
+
+    	    $uid =0;
+
+    	    
+
+    	}
+
+    	return $uid;
+
+	}
 
 	function about(){
 
 		return array(
 
-			"version:"=>"1.3", 
+			"version:"=>"1.4", 
 
 			"developer"=>"A.Mackay", 
 
@@ -120,6 +166,8 @@ class db{
 
 			// before executing any command without a where clause.
 
+			$activity = "deleting table " . $table . " where " . $where;
+
 			if (is_null($where) && ($safeguard == false)){
 
 				echo ("<li>Missing where clause or confirmation not declared");				
@@ -129,6 +177,8 @@ class db{
 			}else{
 
 				$GLOBALS['conn']->prepare("DELETE FROM " . $table . " WHERE " . $where)->execute();
+
+				$this->activityLog("Delete Data", $activity, $uid);
 
 				return true;
 
@@ -146,7 +196,25 @@ class db{
 
 
 
-	private function activityLog($activity, $userId){
+	private function activityLog($action, $activity, $userID){
+
+		$arr['title'] = $action;
+
+		$arr['description'] = $activity;
+
+		$arr['userID'] = $userID;
+
+		$arr['page'] = $_SERVER["SCRIPT_NAME"] . "?" . http_build_query($_GET, "", "&amp;");
+
+		$arr['error'] = 0;
+
+		$arr['read_entry'] = 0;
+
+		$arr['timestamp'] = time();
+
+		$this->insert("activity", $arr, false);
+
+		
 
 		// records an action on the website performed by the user (data overload mind)
 
@@ -164,13 +232,15 @@ class db{
 
 
 
-	function insert($table, $cell_and_values){
+	function insert($table, $cell_and_values, $do_log=true){
 
 		// inserts a row into a table of the database based on an associated array of values
 
 		// provided, and prepared statement is used.
 
-		
+			$activity = "New entry made to " . $table . " with values " . implode(", ", $cell_and_values);
+
+		    $uid = $this->getUID();
 
 			$sqlQuery = "INSERT INTO " . $table . " ";
 
@@ -179,8 +249,6 @@ class db{
 			$values = "";
 
 			$execution = [];
-
-			
 
 			foreach($cell_and_values as $key=>$value){
 
@@ -217,6 +285,12 @@ class db{
 				$query = $GLOBALS['conn']->prepare($sqlQuery);
 
 				$query->execute($execution);
+
+				if($do_log){
+
+    				$this->activityLog("new data", $activity, $uid);
+
+				}
 
 				return true;
 
@@ -268,6 +342,10 @@ class db{
 
 			}else{
 
+				$activity = "Amanding entry " . $whereCondition . " in " . $table . " with values " . implode(", ", $values);
+
+				$uid = $this->getUID();
+
 				$sqlQuery = "UPDATE " . $table . " SET ";
 
 				$counter = 1;
@@ -293,6 +371,8 @@ class db{
 					$query = $GLOBALS['conn']->prepare($sqlQuery);
 
 					$query->execute();
+
+					$this->activityLog("update data", $activity, $uid);
 
 					return true;
 
@@ -354,6 +434,10 @@ class db{
 
 		// a false return is a failure to carry out the query.
 
+		$activity = "a query was made to " . $table;
+
+		$uid = $this->getUID();
+
 		$sql = "SELECT ";
 
 		$counter = 1;
@@ -374,6 +458,8 @@ class db{
 
 			}
 
+			$activity .= " " . implode(", ", $fields);
+
 		}else{
 
 			if ($safeguard == True){
@@ -381,6 +467,8 @@ class db{
 				$sql .= "*";
 
 			}
+
+			$activity .= " * ";
 
 		}
 
@@ -401,6 +489,8 @@ class db{
 			if ($where != NULL){
 
 				$sql .= " WHERE " . $where;
+
+				$activity .= " where " . $where;
 
 			}
 
@@ -445,6 +535,8 @@ class db{
 			$query = $GLOBALS['conn']->prepare($sql);
 
 			$query->execute();
+
+			$this->activityLog("querying data", $activity, $uid);
 
 			return $query->fetchAll(PDO::FETCH_ASSOC);
 
@@ -529,6 +621,7 @@ class db{
 }
 
 //$old_error_handler = set_error_handler("errorLog");
+
 
 
 ?>
