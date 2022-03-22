@@ -4,7 +4,45 @@ echo "<h1>Account Details</h1>";
 
 if (isset($uid)){
 
+    if (isset($_POST['submit'])){
+
+    	foreach ($_POST as $key => $value){
+
+    		if ($key != "submit"){
+
+    		    if ($key == "dob"){
+
+    		        if ($value != NULL){
+
+    		            $value = trim(strtotime($value));
+
+    		        }else{
+
+    		            $value = 0;
+
+    		        }
+
+	    	    }
+
+    			$database_values[$key] = $value;	
+
+    		}
+
+	    }
+
+    	$saved = $db->update("fh_users", $database_values, "id='".$uid . "'");	
+
+    	if ($saved){
+
+    	    echo "<h1 class='announcement'>Account Information Updated</h1>";
+
+    	}
+
+    }
+
     $user = $db->getRow("fh_users", "id=" . $uid);
+
+    echo "<form id='regform' name='registrationform' method='post' action='index.php?page=account'>";
 
     echo "<table>";
 
@@ -38,7 +76,9 @@ if (isset($uid)){
 
     echo "</table>";
 
-    echo "<input type=\"submit\" value=\"Submit\">";
+    echo "<input type=\"submit\" value=\"Submit\" name='submit' class=\"btn\">";
+
+    echo "</form>";
 
     echo "<h1>Items Borrowed</h1>";
 
@@ -49,4 +89,5 @@ if (isset($uid)){
 }
 
 // developed by Adam MacKay 2000418 - 14/03/22
+
 ?>
