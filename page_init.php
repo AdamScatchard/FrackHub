@@ -16,7 +16,7 @@
 				$user = $db->getRow("fh_users", "id = '" . $uid . "'");
 				$userAccessLevel = $user['priviledge_id'];
 		        $accessCheck = $db->getRow("fh_priviledge_settings", "priviledge_id = '". $userAccessLevel . "'");
-		        if (isset($_GET['page'])){
+		        if (isset($_GET['page']) && is_array($accessCheck)){
     		        if (array_key_exists($_GET['page'], $accessCheck)){
         	       		// check priviledges to see if user can have this page shown or not
                 		// if not divert away to home page (defined in the settings)
@@ -40,7 +40,7 @@
         		        }
     		        }
 		        }else{
-    				$visiting_page = $home_page;
+					$visiting_page = $home_page;
 		        }
 			}else{
 			    if (isset($_GET['page'])){
