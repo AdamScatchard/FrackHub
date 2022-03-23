@@ -3,6 +3,7 @@
 // developed by Adam MacKay 2000418 - 14/03/22
 
 
+
 echo "<h1>Registration page</h1>";
 
 echo "<br>";
@@ -75,31 +76,31 @@ if (isset($_POST['register'])){
 
 	<p class="form_p">Address Line 1:</p>
 
-	<input type="text" id="username" name="address_line1" placeholder="Enter Username" class="form_txtBox">
+	<input type="text" id="FLineAdd" name="address_line1" placeholder="First Line of Address" class="form_txtBox">
 
 	<p class="form_p">Address Line 2:</p>
 
-	<input type="text" id="username" name="address_line2" placeholder="Enter Username" class="form_txtBox">
+	<input type="text" id="SLineAdd" name="address_line2" placeholder="Second line of address" class="form_txtBox">
 
 	<p class="form_p">Address Line 3:</p>
 
-	<input type="text" id="username" name="address_line3" placeholder="Enter Username" class="form_txtBox">
+	<input type="text" id="TLineAddr" name="address_line3" placeholder="Third line of address" class="form_txtBox">
 
 	<p class="form_p">Country:</p>
 
-	<input type="text" id="username" name="country" placeholder="Enter Username" class="form_txtBox">
+	<input type="text" id="country" name="country" placeholder="Enter Country" class="form_txtBox">
 
 	<p class="form_p">Post Code:</p>
 
-	<input type="text" id="username" name="postcode" placeholder="Enter Username" class="form_txtBox" max=9>
+	<input type="text" id="pcode" name="postcode" placeholder="Enter Post Code" class="form_txtBox" max=9>
 
 	<p class="form_p">Phone:</p>
 
-	<input type="text" id="username" name="phone1" placeholder="Enter Username" class="form_txtBox">
+	<input type="text" id="landline" name="phone1" placeholder="Landline" class="form_txtBox">
 
 	<p class="form_p">Phone:</p>
 
-	<input type="text" id="username" name="phone2" placeholder="Enter Username" class="form_txtBox">	
+	<input type="text" id="mobile" name="phone2" placeholder="Mobile" class="form_txtBox">	
 
 	<p class="form_p">Password:</p>
 
