@@ -1,6 +1,6 @@
 <?php
 	if (!isset($uid)){
-		header("location:?page=404");
+		header("location:?page=unauthorised_access");
 		exit();
 	}
 	
@@ -18,12 +18,13 @@
 		goto exit_php;
 	}
 	
-	if($_POST["amount_loaned"] <= 0){
-		echo("Error, to book an item the amount needs to be higher than 0.");
+	if($_POST["amount_loaned"] <= 0 || !ctype_digit($_POST["amount_loaned"])){
+		echo("Error, to book an item the amount needs to be an integer higher than 0.");
 		goto exit_php;
 	}
 	
-	$original_advert = $db->query("fh_adverts", ["active", "available", "amount_available"], "id = '" . $_POST["id"] . "'");
+	//taking all collumns since the variable is going to be used to revert any changes on errors
+	$original_advert = $db->query("fh_adverts", NULL, "id = '" . $_POST["id"] . "'", true);
 
 	if(!$original_advert){
 		echo("Error, the item you're trying to book doesn't exist.");
@@ -87,7 +88,7 @@
 		goto exit_php;
 	}
 	
-	$result = $db->insert("fh_items_loaned", ["itemID" => $_POST["id"], "loanerID" => $uid, "amount_loaned" => $_POST["amount_loaned"]]);
+	$result = $db->insert("fh_items_loaned", ["itemID" => $_POST["id"], "loanerID" => $uid, "amount_loaned" => $_POST["amount_loaned"], "timestamp" => time()]);
 	
 	if(!$result){
 		echo("There has been an error while trying to book the item. Try again or speak with an administrator.");
@@ -115,7 +116,7 @@
 <form action="?page=book_item" method="post">
 	<p class = "form_p">Item ID</p>
 	<input type = "text" name="id" id = "id" placeholder = "Enter Item ID" required class="form_txtBox">
-	<p class = "form_p">Amount</p>
-	<input type = "number" name="amount_loaned" id = "amount_loaned" placeholder = "Enter Amount To Loan" required min = "1" class="form_txtBox">
+	<p class = "form_p">Items Amount</p>
+	<input type = "number" name="amount_loaned" id = "amount_loaned" placeholder = "Enter Amount To Loan" required min = "1" step = "1" class="form_txtBox">
 	<input type="submit" name="submit" value="Book Item" class = "form_button">
 </form>
