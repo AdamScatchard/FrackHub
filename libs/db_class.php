@@ -50,7 +50,15 @@
 
 $conn;
 
+if (isset($_GET['debug'])){
 
+    $debug_url = $_GET['debug'];
+
+}else{
+
+    $debug_url = false;
+
+}
 
 class db{
 
@@ -426,7 +434,7 @@ class db{
 
 	}
 
-	function query($table, $fields = NULL, $where = NULL, $safeguard = False, $orderBy = NULL){
+	function query($table, $fields = NULL, $where = NULL, $safeguard = False, $orderBy = NULL, $limit = NULL){
 
 		// performs a SQL query and returns the results as an associated array
 
@@ -527,6 +535,20 @@ class db{
 				$counter++;
 
 			}
+
+		}
+
+		// amendment date: 25/03/22 adding limit records in results.
+
+		if ($limit != NULL){
+
+		    $sql .= " LIMIT " . $limit;
+
+		}
+
+		if ($GLOBALS['debug'] && $GLOBALS['debug_url']){
+
+    		echo $sql . "<br>";
 
 		}
 
