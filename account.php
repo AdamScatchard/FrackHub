@@ -25,7 +25,7 @@ function transaction($database_values, $old_balance){
 	}
 
 	//making sure there hasn't been an error with the original query
-	$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $database_values["userID"] . "' LIMIT 1", orderBy : ["id" => "DESC"]);
+//	$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $database_values["userID"] . "' LIMIT 1", orderBy : ["id" => "DESC"]);
 	
 	if(!$latest_transaction || $latest_transaction[0]["balance"] != $database_values["balance"]){
 		//if there was, then the transaction is not correct and needs to be reverted
@@ -81,7 +81,7 @@ if (isset($uid)){
     }
 	elseif(isset($_POST['top up submit']) && isset($_POST['top up credits'])){
 		if($_POST['top up credits'] > 0){
-			$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "' LIMIT 1", orderBy : ["id" => "DESC"]);
+//			$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "' LIMIT 1", orderBy : ["id" => "DESC"]);
 			$old_balance = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 			$new_balance = $old_balance + $_POST['top up credits'];
 			$database_values = ["userID" => $uid, "advertID" => -1, "TransactionType" => 0, "ip_address" => $_SERVER['REMOTE_ADDR'],
@@ -120,7 +120,7 @@ if (isset($uid)){
 				//also should change it so it grabs the credits value from the moment it was loaned, not from the current advert
 				$credits = $advert[0]["credits"] * $item["amount_loaned"] * ($item["timestamp"] - time()) / 86400; //86400 is the amount of seconds in a day
 				
-				$loaner_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "' LIMIT 1", orderBy : ["id" => "DESC"]);
+				$loaner_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", false, ["id" => "DESC"], 1);
 				$loaner_old_balance = $loaner_latest_transaction? $loaner_latest_transaction[0]["balance"] : 0;
 				$loaner_new_balance = $loaner_old_balance - $credits;
 				$loaner_database_values = ["userID" => $uid, "advertID" => $item["itemID"], "TransactionType" => 1, "ip_address" => $_SERVER['REMOTE_ADDR'],
@@ -130,7 +130,7 @@ if (isset($uid)){
 				
 				if($result){
 					//everything is good for the loaner. now need to give the credits to the borrower
-					$borrower_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $advert["userID"] . "' LIMIT 1", orderBy : ["id" => "DESC"]);
+					$borrower_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $advert["userID"] . "'", false, ["id" => "DESC"], 1);
 					$borrower_old_balance = $borrower_latest_transaction? $borrower_latest_transaction[0]["balance"] : 0;
 					$borrower_new_balance = $borrower_old_balance + $credits;
 					$borrower_database_values = ["userID" => $advert["userID"], "advertID" => $item["itemID"], "TransactionType" => 2, "ip_address" => $_SERVER['REMOTE_ADDR'],
@@ -191,8 +191,12 @@ if (isset($uid)){
 	
 	echo '<br>';
 	echo '<form action="?page=account" method="post">';
+
+
+//Cristians Code: 
+
 	echo '<table>';
-	$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "' LIMIT 1", orderBy : ["id" => "DESC"]);
+	$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", NULL, ["id" => "DESC"]);
 	$credits = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 	echo '<tr>';
 	echo '<td>Credits: ' . $credits . '</td>';
@@ -203,7 +207,7 @@ if (isset($uid)){
 
     echo "<h1>Items Borrowed</h1>";
 	
-	$items = $db->query("fh_items_loaned", NULL, "loanerID = '" . $uid . "'", orderBy : ["id" => "DESC"]);
+	$items = $db->query("fh_items_loaned", NULL, "loanerID = '" . $uid . "'", true, ["id" => "DESC"]);
 	
 	if($items){
 		echo '<table><tr>';
@@ -221,7 +225,7 @@ if (isset($uid)){
 				echo '<td>' . $value . '</td>';
 			}
 			
-			$advert = $db->query("fh_adverts", ["credits"], "Id = '" . $item["itemID"] . "'");
+			$advert = $db->query("fh_adverts", ["credits"], "Id = '" . $item["itemID"] . "'",false, NULL, 1);
 			
 			if(!$advert or count($advert) > 1){
 				//if no advert is found, then that means it's been deleted from the database, without taking care of
@@ -253,7 +257,7 @@ if (isset($uid)){
 
     echo "<h1>Items Loanings</h1>";
 	
-	$items = $db->query("fh_adverts", NULL, "userID = '" . $uid . "'", orderBy : ["id" => "DESC"]);
+	$items = $db->query("fh_adverts", NULL, "userID = '" . $uid . "'",true, ["id" => "DESC"],1);
 	
 	if($items){
 		echo '<table><tr>';
@@ -282,7 +286,7 @@ if (isset($uid)){
 
     echo "<h1>My Credit Ledger</h1>";
 	
-	$transactions = $db->query("fh_ledger", NULL, "userID = '" . $uid . "'", true, ["id" => "DESC"]);
+	$transactions = $db->query("fh_ledger", NULL, "userID = '" . $uid . "'", true, ["id" => "DESC"], 1);
 	
 	if($transactions){
 		echo '<table><tr>';
@@ -318,6 +322,7 @@ if (isset($uid)){
 	else{
 		echo "<p>NONE</p>";
 	}
+
 }
 
 // developed by Adam MacKay 2000418 - 14/03/22
