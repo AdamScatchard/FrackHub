@@ -16,7 +16,7 @@ $db_db = "id18498157_frackhubtestingdb";
 
 $db_host = "localhost";
 
-
+$encryption_key = 12;
 
 // Library and Dependant Folders
 
