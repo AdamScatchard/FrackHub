@@ -4,7 +4,11 @@
 	// library / api PHP files https://frackhub.000webhostapp.com/adammac/
 	include ("settings.php");
 	include ($lib_dir . "db_class.php");
+	include ($lib_dir . "encryption_class.php");
+
 	$db = new db();
+	$encryption = new encryption();
+	$encryption->setKey($encryption_key);
 	$connected = $db->connect();	
 	if ($connected){
 		// check for existing login:
