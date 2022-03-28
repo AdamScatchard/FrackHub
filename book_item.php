@@ -24,33 +24,35 @@
 	}
 	
 	//taking all collumns since the variable is going to be used to revert any changes on errors
-	$original_advert = $db->query("fh_adverts", NULL, "id = '" . $_POST["id"] . "'", true);
+	$original_adverts = $db->query("fh_adverts", NULL, "id = '" . $_POST["id"] . "'", true);
 
-	if(!$original_advert){
+	if(!$original_adverts){
 		echo("Error, the item you're trying to book doesn't exist.");
 		goto exit_php;
 	}
 	
-	if(count($original_advert) > 1){
+	if(count($original_adverts) > 1){
 		echo("Something has gone terribly wrong with the database. Please notify an administrator. Error code 1.");
 		goto exit_php;
 	}
 	
-	if($original_advert[0]["active"] == 0){
+	$original_advert = $original_adverts[0];
+	
+	if($original_advert["active"] == 0){
 		echo("We're sorry. The item you're trying to book has not been checked by a moderator yet.\n
 		Please wait until they do so.");
 		goto exit_php;
 	}
 	
-	if($original_advert[0]["available"] == 0){
+	if($original_advert["available"] == 0){
 		echo("We're sorry. The item is not available to be booked yet.");
 		goto exit_php;
 	}
 	
 	//these errors shouldn't really appear, since the available field above should already take care of it,
 	//but not taking any chances
-	if($original_advert[0]["amount_available"] <= 0){
-		if($original_advert[0]["amount_available"] == 0){
+	if($original_advert["amount_available"] <= 0){
+		if($original_advert["amount_available"] == 0){
 			echo("We're sorry. The item is not available to be booked yet.");
 		}
 		else{
@@ -71,17 +73,17 @@
 	$updated_advert = $original_advert;
 
 	//amount is definitely greater than 0 at this point
-	$updated_advert[0]["amount_available"] = $updated_advert[0]["amount_available"] - $_POST["amount_loaned"];
+	$updated_advert["amount_available"] = $updated_advert["amount_available"] - $_POST["amount_loaned"];
 	
-	if($updated_advert[0]["amount_available"] < 0){
-		echo("Error the item only has an amount of '" . $original_advert[0]["amount_available"] . "' available.\nPlease input a lower number.");
+	if($updated_advert["amount_available"] < 0){
+		echo("Error the item only has an amount of '" . $original_advert["amount_available"] . "' available.\nPlease input a lower number.");
 		goto exit_php;
 	}
-	elseif($updated_advert[0]["amount_available"] == 0){
-		$updated_advert[0]["available"] = 0;
+	elseif($updated_advert["amount_available"] == 0){
+		$updated_advert["available"] = 0;
 	}
 
-	$result = $db->update("fh_adverts", $updated_advert[0], "id = '" . $_POST["id"] . "'");
+	$result = $db->update("fh_adverts", $updated_advert, "id = '" . $_POST["id"] . "'");
 	
 	if(!$result){
 		echo("There has been an error while trying to book the item. Try again or speak with an administrator.");
@@ -96,7 +98,7 @@
 		//the adverts have already been updated, and an error here means that the two tables are now out of sync
 		//so this is attempting to revert the previous update.
 		
-		$result = $db->update("fh_adverts", $original_advert[0], "id = '" . $_POST["id"] . "'");
+		$result = $db->update("fh_adverts", $original_advert, "id = '" . $_POST["id"] . "'");
 	
 		//if this fails then the databases remain out of sync, which is bad
 		if(!$result){
