@@ -115,10 +115,12 @@
 	exit_php:
 ?>
 
-<form action="?page=book_item" method="post">
+<?php	
+	echo '<form action="?page=book_item" method="post">
 	<p class = "form_p">Item ID</p>
-	<input type = "text" name="id" id = "id" placeholder = "Enter Item ID" required class="form_txtBox">
+	<input type = "text" name="id" id = "id"' . (isset($_POST["id"])? ' value = "' . $_POST["id"] . '"' : "") . ' placeholder = "Enter Item ID" required class="form_txtBox">
 	<p class = "form_p">Items Amount</p>
-	<input type = "number" name="amount_loaned" id = "amount_loaned" placeholder = "Enter Amount To Loan" required min = "1" step = "1" class="form_txtBox">
+	<input type = "number" name="amount_loaned" id = "amount_loaned"' . (isset($_POST["amount_loaned"])? ' value = "' . $_POST["amount_loaned"] . '"' : "") . ' placeholder = "Enter Amount To Loan" required min = "1" step = "1" class="form_txtBox">
 	<input type="submit" name="submit" value="Book Item" class = "form_button">
-</form>
+	</form>'
+?>
