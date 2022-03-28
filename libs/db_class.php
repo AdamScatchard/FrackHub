@@ -175,6 +175,7 @@ class db{
 			// before executing any command without a where clause.
 
 			$activity = "deleting table " . $table . " where " . $where;
+			$uid = $this->getUID();
 
 			if (is_null($where) && ($safeguard == false)){
 
@@ -524,11 +525,11 @@ class db{
 
 				if ($value == "DESC"){
 
-					$sql . "DESC";
+					$sql .= "DESC";
 
 				}else{
 
-					$sql . "ASC";
+					$sql .= "ASC";
 
 				}
 
