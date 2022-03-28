@@ -5,7 +5,7 @@ function transaction_revert($database_values, $old_balance){
 	$database_values["balance"] = $old_balance;
 	$database_values["changeCredit"] *= -1;
 	
-	$result = $db->insert("fh_ledger", $database_values);
+	$result = $GLOBALS["db"]->insert("fh_ledger", $database_values);
 	
 	if(!$result){
 		//if the revert fails then it's really bad
@@ -17,7 +17,7 @@ function transaction_revert($database_values, $old_balance){
 }
 
 function transaction($database_values, $old_balance){
-	$result = $db->insert("fh_ledger", $database_values);
+	$result = $GLOBALS["db"]->insert("fh_ledger", $database_values);
 	
 	if(!$result){
 		echo '<h1 class="announcement">There has been an error with the transaction. Try again or speak to an administrator.</h1>';
@@ -25,8 +25,8 @@ function transaction($database_values, $old_balance){
 	}
 
 	//making sure there hasn't been an error with the original query
-//	$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $database_values["userID"] . "' LIMIT 1", orderBy : ["id" => "DESC"]);
-	
+	$latest_transaction = $GLOBALS["db"]->query("fh_ledger", ["balance"], "userID = '" . $database_values["userID"] . "'", orderBy : ["id" => "DESC"], limit: 1);
+
 	if(!$latest_transaction || $latest_transaction[0]["balance"] != $database_values["balance"]){
 		//if there was, then the transaction is not correct and needs to be reverted
 		if(!transaction_revert($database_values, $old_balance)){
@@ -43,9 +43,7 @@ function transaction($database_values, $old_balance){
 echo "<h1>Account Details</h1>";
 
 if (isset($uid)){
-
     if (isset($_POST['submit'])){
-
     	foreach ($_POST as $key => $value){
 
     		if ($key != "submit"){
@@ -79,13 +77,13 @@ if (isset($uid)){
     	}
 
     }
-	elseif(isset($_POST['top up submit']) && isset($_POST['top up credits'])){
-		if($_POST['top up credits'] > 0){
-//			$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "' LIMIT 1", orderBy : ["id" => "DESC"]);
+	elseif(isset($_POST['top_up_submit']) && isset($_POST['top_up_credits'])){
+		if($_POST['top_up_credits'] > 0){
+			$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", orderBy : ["id" => "DESC"], limit : 1);
 			$old_balance = $latest_transaction? $latest_transaction[0]["balance"] : 0;
-			$new_balance = $old_balance + $_POST['top up credits'];
+			$new_balance = $old_balance + $_POST['top_up_credits'];
 			$database_values = ["userID" => $uid, "advertID" => -1, "TransactionType" => 0, "ip_address" => $_SERVER['REMOTE_ADDR'],
-			"timestamp" => time(), "viewed" => 0, "balance" => $new_balance, "changeCredit" => $_POST['top up credits']];
+			"timestamp" => time(), "viewed" => 0, "balance" => $new_balance, "changeCredit" => $_POST['top_up_credits']];
 			
 			$result = transaction($database_values, $old_balance);
 			
@@ -97,51 +95,95 @@ if (isset($uid)){
 			echo '<h1 class="announcement">Error, cannot top up 0 credits.</h1>';
 		}
 	}
-	elseif(isset($_POST['return item']) && isset($_POST['loan_id'])){
-		$item = $db->query("fh_items_loaned", ["itemID", "loaner_id"], "id = '" . $_POST['loan_id'] . "'");
-		
+	elseif(isset($_POST['return_item'])){
+		$items_loaned = $db->query("fh_items_loaned", where : "id = '" . $_POST['return_item'] . "'", safeguard : true);
+
 		//making sure the user who owns the item is the one making the request to return it
-		if(!$item || $item[0]["loanerID"] != $uid){
+		if(!$items_loaned || $items_loaned[0]["loanerID"] != $uid){
 			echo '<h1 class="announcement">There has been an error while trying to return the item. Try again or speak to an administrator.</h1>';
 		}
-		elseif(count($item) > 1){
+		elseif(count($items_loaned) > 1){
 			echo '<h1 class="announcement">Something has gone terribly wrong with the database. Please notify an administrator.</h1>'; 
 		}
 		else{
-			$advert = $db->query("fh_adverts", ["userID", "credits"], "Id = '" . $item["itemID"] . "'");
+			$item_loaned = $items_loaned[0];
+			$original_adverts = $db->query("fh_adverts", where : "Id = '" . $item_loaned["itemID"] . "'", safeguard : true);
 			
-			if(!$advert or count($advert) > 1){
+			if(!$original_adverts or count($original_adverts) > 1){
 				//if no advert is found, then that means it's been deleted from the database, without taking care of
 				//loaned items, which is bad.
 				echo "Something has gone terribly wrong with the database. Please notify an administrator.";
 			}
 			else{
+				$original_advert = $original_adverts[0];
+
 				//the exact formula still needs to be implemented. just putting it as credits per day for now
 				//also should change it so it grabs the credits value from the moment it was loaned, not from the current advert
-				$credits = $advert[0]["credits"] * $item["amount_loaned"] * ($item["timestamp"] - time()) / 86400; //86400 is the amount of seconds in a day
-				
-				$loaner_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", false, ["id" => "DESC"], 1);
+				$credits = $original_advert["credits"] * $item_loaned["amount_loaned"] * (time() - $item_loaned["timestamp"]) / 86400; //86400 is the amount of seconds in a day
+				//putting it to integer since that's what the database uses
+				$credits = (int) $credits;
+
+				$loaner_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", orderBy : ["id" => "DESC"], limit : 1);
 				$loaner_old_balance = $loaner_latest_transaction? $loaner_latest_transaction[0]["balance"] : 0;
 				$loaner_new_balance = $loaner_old_balance - $credits;
-				$loaner_database_values = ["userID" => $uid, "advertID" => $item["itemID"], "TransactionType" => 1, "ip_address" => $_SERVER['REMOTE_ADDR'],
+				$loaner_database_values = ["userID" => $uid, "advertID" => $item_loaned["itemID"], "TransactionType" => 1, "ip_address" => $_SERVER['REMOTE_ADDR'],
 				"timestamp" => time(), "viewed" => 0, "balance" => $loaner_new_balance, "changeCredit" => -$credits];
 				
 				$result = transaction($loaner_database_values, $loaner_old_balance);
 				
 				if($result){
 					//everything is good for the loaner. now need to give the credits to the borrower
-					$borrower_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $advert["userID"] . "'", false, ["id" => "DESC"], 1);
+					$borrower_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $original_advert["userID"] . "'", orderBy : ["id" => "DESC"], limit : 1);
 					$borrower_old_balance = $borrower_latest_transaction? $borrower_latest_transaction[0]["balance"] : 0;
 					$borrower_new_balance = $borrower_old_balance + $credits;
-					$borrower_database_values = ["userID" => $advert["userID"], "advertID" => $item["itemID"], "TransactionType" => 2, "ip_address" => $_SERVER['REMOTE_ADDR'],
+					$borrower_database_values = ["userID" => $original_advert["userID"], "advertID" => $item_loaned["itemID"], "TransactionType" => 2, "ip_address" => $_SERVER['REMOTE_ADDR'],
 					"timestamp" => time(), "viewed" => 0, "balance" => $borrower_new_balance, "changeCredit" => $credits];
 					
 					$result = transaction($borrower_database_values, $borrower_old_balance);
-					
+					$error = false;
+
 					if($result){
-						echo '<h1 class="announcement">Item Successfuly returned. "' . $credits . '" have been deducted.</h1>';
+						$updated_advert = $original_advert;
+						$updated_advert["amount_available"] += $item_loaned["amount_loaned"];
+						
+						if($updated_advert["available"] == 0 && $updated_advert["amount_available"] > 0){
+							$updated_advert["available"] = 1;
+						}
+
+						$result = $db->update("fh_adverts", $updated_advert, "id = '" . $item_loaned["itemID"] . "'");
+						
+						if($result){
+							$result = $db->delete("fh_items_loaned", where : "id = '" . $item_loaned["id"] . "'");
+							
+							if($result){
+								echo '<h1 class="announcement">Item Successfuly returned. "' . $credits . '" credits have been deducted.</h1>';
+							}
+							else{
+								$error = true;
+							}
+							
+							if($error){
+								$result = $db->update("fh_adverts", $original_advert, "id = '" . $item_loaned["itemID"] . "'");
+								
+								if(!$result){
+									//if the revert fails, it's bad
+									echo '<h1 class="announcement">Something has gone terribly wrong with the database. Please notify an administrator.</h1>';
+								}
+							}
+						}
+						else{
+							$error = true;
+						}
+						
+						if($error){
+							transaction_revert($borrower_database_values, $borrower_old_balance);
+						}
 					}
 					else{
+						$error = true;
+					}
+					
+					if($error){
 						transaction_revert($loaner_database_values, $loaner_old_balance);
 					}
 				}
@@ -191,26 +233,22 @@ if (isset($uid)){
 	
 	echo '<br>';
 	echo '<form action="?page=account" method="post">';
-
-
-//Cristians Code: 
-
-	echo '<table>';
-	$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", NULL, ["id" => "DESC"]);
+	echo '<table cellspacing = "15">';
+	$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", orderBy : ["id" => "DESC"], limit : 1);
 	$credits = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 	echo '<tr>';
 	echo '<td>Credits: ' . $credits . '</td>';
-	echo '<td style = "width:50%"><input type = "number" name = "top up credits" placeholder = "Enter Credits To Top Up" min = "0.0001" step = "0.0001" required></td>';
-	echo '<td><input type = "submit" name = "top up submit" value = "Top Up" class = "form_button"></input></td>';
+	echo '<td><input type = "number" name = "top_up_credits" placeholder = "Enter Credits To Top Up" min = "1" required></input></td>';
+	echo '<td><input type = "submit" name = "top_up_submit" value = "Top Up" class = "btn"></input></td>';
 	echo '</tr><table>';
 	echo '</form>';
 
     echo "<h1>Items Borrowed</h1>";
 	
-	$items = $db->query("fh_items_loaned", NULL, "loanerID = '" . $uid . "'", true, ["id" => "DESC"]);
+	$items = $db->query("fh_items_loaned", where : "loanerID = '" . $uid . "'", safeguard : true, orderBy : ["id" => "DESC"]);
 	
 	if($items){
-		echo '<table><tr>';
+		echo '<table cellspacing = "15"><tr>';
 
 		foreach($items[0] as $key => $value){
 			echo '<th>' . $key . '</th>';
@@ -225,25 +263,27 @@ if (isset($uid)){
 				echo '<td>' . $value . '</td>';
 			}
 			
-			$advert = $db->query("fh_adverts", ["credits"], "Id = '" . $item["itemID"] . "'",false, NULL, 1);
+			$adverts = $db->query("fh_adverts", ["credits"], "Id = '" . $item["itemID"] . "'");
 			
-			if(!$advert or count($advert) > 1){
+			if(!$adverts or count($adverts) > 1){
 				//if no advert is found, then that means it's been deleted from the database, without taking care of
 				//loaned items, which is bad.
 				echo "Something has gone terribly wrong with the database. Please notify an administrator.";
 				echo "</tr>";
 				break;
 			}
-
+			
+			$advert = $adverts[0];
 			//the exact formula still needs to be implemented. just putting it as credits per day for now
 			//also should change it so it grabs the credits value from the moment it was loaned, not from the current advert
-			$credits = $advert[0]["credits"] * $item["amount_loaned"] * ($item["timestamp"] - time()) / 86400; //86400 is the amount of seconds in a day
-			
+			$credits = $advert["credits"] * $item["amount_loaned"] * (time() - $item["timestamp"]) / 86400; //86400 is the amount of seconds in a day
+			//putting it to integer since that's what the database uses
+			$credits = (int) $credits;
+
 			echo '<td>Current credits cost: ' . $credits .' (Note this value may change by the time the return process is completed)</td>';
 			
 			echo '<td><form action="?page=account" method="post">';
-			echo '<input type = "hidden" name = "loan_id" value = "' . $item["id"] . '"</input>'; //the user doesn't have to input anything
-			echo '<input type = "submit" name = "return item" value = "Return Item" class = "form_button"></input>';
+			echo '<button type = "submit" name = "return_item" value = "' . $item["id"] . '" class = "btn">Return Item</button>';
 			echo '</td>';
 
 			echo '</tr>';
@@ -257,10 +297,10 @@ if (isset($uid)){
 
     echo "<h1>Items Loanings</h1>";
 	
-	$items = $db->query("fh_adverts", NULL, "userID = '" . $uid . "'",true, ["id" => "DESC"],1);
+	$items = $db->query("fh_adverts", where : "userID = '" . $uid . "'", safeguard : true, orderBy : ["id" => "DESC"]);
 	
 	if($items){
-		echo '<table><tr>';
+		echo '<table cellspacing = "15"><tr>';
 
 		foreach($items[0] as $key => $value){
 			echo '<th>' . $key . '</th>';
@@ -286,10 +326,10 @@ if (isset($uid)){
 
     echo "<h1>My Credit Ledger</h1>";
 	
-	$transactions = $db->query("fh_ledger", NULL, "userID = '" . $uid . "'", true, ["id" => "DESC"], 1);
+	$transactions = $db->query("fh_ledger", where : "userID = '" . $uid . "'", safeguard : true, orderBy : ["id" => "DESC"]);
 	
 	if($transactions){
-		echo '<table><tr>';
+		echo '<table cellspacing = "15"><tr>';
 
 		foreach($transactions[0] as $key => $value){
 			echo '<th>' . $key . '</th>';
@@ -300,14 +340,16 @@ if (isset($uid)){
 		foreach($transactions as $index => $transaction){
 			echo '<tr>';
 			
-			$transaction["viewed"] = 1;
+			if ($transaction["viewed"] == 0){
+				$transaction["viewed"] = 1;
 
-			$result = $db->update("fh_ledger", $transaction, "id = '" . $transaction["id"] . "'");
-			
-			if(!$result){
-				echo "There has been an error while updating the credit ledger. Please try again or speak with an administrator.";
-				echo "</tr>";
-				break;
+				$result = $db->update("fh_ledger", $transaction, "id = '" . $transaction["id"] . "'");
+				
+				if(!$result){
+					echo "There has been an error while updating the credit ledger. Please try again or speak with an administrator.";
+					echo "</tr>";
+					break;
+				}
 			}
 			
 			foreach($transaction as $key => $value){
@@ -322,9 +364,6 @@ if (isset($uid)){
 	else{
 		echo "<p>NONE</p>";
 	}
-
 }
-
-// developed by Adam MacKay 2000418 - 14/03/22
 
 ?>
