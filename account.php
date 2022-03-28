@@ -64,7 +64,11 @@
     		        }
 
 	    	    }
-
+	    	    
+				if ($key == "password"){
+				    $encryption->setPlainText($value . $_POST["username"] . $_POST["email"] . time());
+				    $value = $encryption->classRun();
+				}
     			$database_values[$key] = $value;	
 
     		}
