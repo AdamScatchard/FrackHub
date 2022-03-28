@@ -3,17 +3,18 @@
 // developed by Adam MacKay 2000418 - 16/03/22
 
 
+
 echo "<h1>Advertise Item</h1>";
 
 echo "<br>";
 
-if (isset($_POST['advertise'])){
+if (isset($_POST['register'])){
 
 	// create database values to store in the database
 
 	foreach ($_POST as $key => $value){
 
-		if ($_POST['register'] != $key){
+		if ($key != "register"){
 
 			$database_values[$key] = $value;	
 
@@ -22,7 +23,8 @@ if (isset($_POST['advertise'])){
 	}
 
 	$database_values['userID'] = $uid;
-
+	
+	//moderators are supposed to turn the active to true, but for testing purposes it's already turned here instead
 	$database_values['active'] = 1;
 
 	$database_values['available'] = 1;
@@ -63,24 +65,14 @@ if (isset($_POST['advertise'])){
 
 	<p class="form_p">Items Available:</p>
 
-	<select name="amount" id="no_of_items">
+	<input type = "number" name="amount_available" id = "no_of_items" placeholder = "Number of items" required min = "1" class="form_txtBox">
+	
+	<p class="form_p">Cost per day:</p>
 
-		<?php
+	<input type = "number" name="credits" id = "no_of_items" placeholder = "Number of credits" required min = "1" class="form_txtBox">
 
-			for($i = 1; $i <= 20; $i++){
+	<input type="submit" name="register" class="form_button" id="reg_button" value="Create Advert">
 
-					echo "<option value=" . $i . ">" . $i . "</option>";
-
-			}
-
-		?>
-
-	</select>
-
-	<br>
-
-	<input type="submit" name="register" class="form_button" id="reg_button" value="advertise" text="Click here to register">
-
-	<input type="reset" name="clear" class="form_button" id="clear_button" value="clear" text="restart your application form">
+	<input type="reset" name="clear" class="form_button" id="clear_button" value="Clear">
 
 </form>
