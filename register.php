@@ -6,15 +6,23 @@
 	if (isset($_POST['register'])){
 
 		// create database values to store in the database
+		$database_values['timestamp'] = time();				// timestamp of registration
+		$database_values['ip_address'] = $_SERVER['REMOTE_ADDR'];	// IP address 
 
 		foreach ($_POST as $key => $value){
 
 			if ($key != "register"){
-
 				if ($key == "dob"){
-
-					$value = strtotime($value);
-
+				    echo "Value is: " . $value;
+				    if (is_null($value) || trim($value) == ""){
+				        $value = 0;
+				    }else{
+    					$value = strtotime($value);
+				    }
+				}
+				if ($key == "password"){
+				    $encryption->setPlainText($value . $_POST["username"] . $_POST["email"] . $database_values['timestamp']);
+				    $value = $encryption->classRun();
 				}
 
 				$database_values[$key] = $value;	
@@ -23,9 +31,6 @@
 
 		}
 
-		$database_values['timestamp'] = time();				// timestamp of registration
-
-		$database_values['ip_address'] = $_SERVER['REMOTE_ADDR'];	// IP address 
 
 		
 
