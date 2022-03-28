@@ -1,48 +1,51 @@
 <?php
-
-function transaction_revert($database_values, $old_balance){
-	$database_values["TransactionType"] = -1;
-	$database_values["balance"] = $old_balance;
-	$database_values["changeCredit"] *= -1;
-	
-	$result = $GLOBALS["db"]->insert("fh_ledger", $database_values);
-	
-	if(!$result){
-		//if the revert fails then it's really bad
-		echo '<h1 class="announcement">Something has gone terribly wrong with the database. Please speak to an administrator.</h1>';
-		return false;
-	}
-	
-	return true;
-}
-
-function transaction($database_values, $old_balance){
-	$result = $GLOBALS["db"]->insert("fh_ledger", $database_values);
-	
-	if(!$result){
-		echo '<h1 class="announcement">There has been an error with the transaction. Try again or speak to an administrator.</h1>';
-		return false;
+	if (!isset($uid)){
+		header("location:?page=unauthorised_access");
+		exit();
 	}
 
-	//making sure there hasn't been an error with the original query
-	$latest_transaction = $GLOBALS["db"]->query("fh_ledger", ["balance"], "userID = '" . $database_values["userID"] . "'", orderBy : ["id" => "DESC"], limit: 1);
+	function transaction_revert($database_values, $old_balance){
+		$database_values["TransactionType"] = -1;
+		$database_values["balance"] = $old_balance;
+		$database_values["changeCredit"] *= -1;
+		
+		$result = $GLOBALS["db"]->insert("fh_ledger", $database_values);
+		
+		if(!$result){
+			//if the revert fails then it's really bad
+			echo '<h1 class="announcement">Something has gone terribly wrong with the database. Please speak to an administrator.</h1>';
+			return false;
+		}
+		
+		return true;
+	}
 
-	if(!$latest_transaction || $latest_transaction[0]["balance"] != $database_values["balance"]){
-		//if there was, then the transaction is not correct and needs to be reverted
-		if(!transaction_revert($database_values, $old_balance)){
+	function transaction($database_values, $old_balance){
+		$result = $GLOBALS["db"]->insert("fh_ledger", $database_values);
+		
+		if(!$result){
+			echo '<h1 class="announcement">There has been an error with the transaction. Try again or speak to an administrator.</h1>';
 			return false;
 		}
 
-		echo '<h1 class="announcement">There has been an error with the transaction. Try again or speak to an administrator.</h1>';
-		return false;
+		//making sure there hasn't been an error with the original query
+		$latest_transaction = $GLOBALS["db"]->query("fh_ledger", ["balance"], "userID = '" . $database_values["userID"] . "'", orderBy : ["id" => "DESC"], limit: 1);
+
+		if(!$latest_transaction || $latest_transaction[0]["balance"] != $database_values["balance"]){
+			//if there was, then the transaction is not correct and needs to be reverted
+			if(!transaction_revert($database_values, $old_balance)){
+				return false;
+			}
+
+			echo '<h1 class="announcement">There has been an error with the transaction. Try again or speak to an administrator.</h1>';
+			return false;
+		}
+
+		return true;
 	}
 
-	return true;
-}
+	echo "<h1>Account Details</h1>";
 
-echo "<h1>Account Details</h1>";
-
-if (isset($uid)){
     if (isset($_POST['submit'])){
     	foreach ($_POST as $key => $value){
 
@@ -190,7 +193,9 @@ if (isset($uid)){
 			}
 		}
 	}
+?>
 
+<?php
     $user = $db->getRow("fh_users", "id=" . $uid);
 
     echo "<form id='regform' name='registrationform' method='post' action='index.php?page=account'>";
@@ -364,6 +369,4 @@ if (isset($uid)){
 	else{
 		echo "<p>NONE</p>";
 	}
-}
-
 ?>
