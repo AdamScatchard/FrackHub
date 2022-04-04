@@ -29,7 +29,7 @@
 		}
 
 		//making sure there hasn't been an error with the original query
-		$latest_transaction = $GLOBALS["db"]->query("fh_ledger", ["balance"], "userID = '" . $database_values["userID"] . "'", orderBy : ["id" => "DESC"], limit: 1);
+		$latest_transaction = $GLOBALS["db"]->query("fh_ledger", ["balance"], "userID = '" . $database_values["userID"] . "'", false, ["id" => "DESC"],  1);
 
 		if(!$latest_transaction || $latest_transaction[0]["balance"] != $database_values["balance"]){
 			//if there was, then the transaction is not correct and needs to be reverted
@@ -86,7 +86,7 @@
     }
 	elseif(isset($_POST['top_up_submit']) && isset($_POST['top_up_credits'])){
 		if($_POST['top_up_credits'] > 0){
-			$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", orderBy : ["id" => "DESC"], limit : 1);
+			$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", ["id" => "DESC"], 1);
 			$old_balance = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 			$new_balance = $old_balance + $_POST['top_up_credits'];
 			$database_values = ["userID" => $uid, "advertID" => -1, "TransactionType" => 0, "ip_address" => $_SERVER['REMOTE_ADDR'],
@@ -103,7 +103,7 @@
 		}
 	}
 	elseif(isset($_POST['return_item'])){
-		$items_loaned = $db->query("fh_items_loaned", where : "id = '" . $_POST['return_item'] . "'", safeguard : true);
+		$items_loaned = $db->query("fh_items_loaned", "id = '" . $_POST['return_item'] . "'", true);
 
 		//making sure the user who owns the item is the one making the request to return it
 		if(!$items_loaned || $items_loaned[0]["loanerID"] != $uid){
@@ -114,7 +114,7 @@
 		}
 		else{
 			$item_loaned = $items_loaned[0];
-			$original_adverts = $db->query("fh_adverts", where : "Id = '" . $item_loaned["itemID"] . "'", safeguard : true);
+			$original_adverts = $db->query("fh_adverts", "Id = '" . $item_loaned["itemID"] . "'", true);
 			
 			if(!$original_adverts or count($original_adverts) > 1){
 				//if no advert is found, then that means it's been deleted from the database, without taking care of
@@ -130,7 +130,7 @@
 				//putting it to integer since that's what the database uses
 				$credits = (int) $credits;
 
-				$loaner_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", orderBy : ["id" => "DESC"], limit : 1);
+				$loaner_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", ["id" => "DESC"],1);
 				$loaner_old_balance = $loaner_latest_transaction? $loaner_latest_transaction[0]["balance"] : 0;
 				$loaner_new_balance = $loaner_old_balance - $credits;
 				$loaner_database_values = ["userID" => $uid, "advertID" => $item_loaned["itemID"], "TransactionType" => 1, "ip_address" => $_SERVER['REMOTE_ADDR'],
@@ -140,7 +140,7 @@
 				
 				if($result){
 					//everything is good for the loaner. now need to give the credits to the borrower
-					$borrower_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $original_advert["userID"] . "'", orderBy : ["id" => "DESC"], limit : 1);
+					$borrower_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $original_advert["userID"] . "'",  ["id" => "DESC"], 1);
 					$borrower_old_balance = $borrower_latest_transaction? $borrower_latest_transaction[0]["balance"] : 0;
 					$borrower_new_balance = $borrower_old_balance + $credits;
 					$borrower_database_values = ["userID" => $original_advert["userID"], "advertID" => $item_loaned["itemID"], "TransactionType" => 2, "ip_address" => $_SERVER['REMOTE_ADDR'],
@@ -160,8 +160,7 @@
 						$result = $db->update("fh_adverts", $updated_advert, "id = '" . $item_loaned["itemID"] . "'");
 						
 						if($result){
-							$result = $db->delete("fh_items_loaned", where : "id = '" . $item_loaned["id"] . "'");
-							
+							$result = $db->delete("fh_items_loaned", "id = '" . $item_loaned["id"] . "'");		
 							if($result){
 								echo '<h1 class="announcement">Item Successfuly returned. "' . $credits . '" credits have been deducted.</h1>';
 							}
@@ -243,7 +242,7 @@
 	echo '<br>';
 	echo '<form action="?page=account" method="post">';
 	echo '<table cellspacing = "15">';
-	$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", orderBy : ["id" => "DESC"], limit : 1);
+	$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", ["id" => "DESC"], 1);
 	$credits = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 	echo '<tr>';
 	echo '<td>Credits: ' . $credits . '</td>';
@@ -254,7 +253,7 @@
 
     echo "<h1>Items Borrowed</h1>";
 	
-	$items = $db->query("fh_items_loaned", where : "loanerID = '" . $uid . "'", safeguard : true, orderBy : ["id" => "DESC"]);
+	$items = $db->query("fh_items_loaned", "loanerID = '" . $uid . "'",  true, ["id" => "DESC"]);
 	
 	if($items){
 		echo '<table cellspacing = "15"><tr>';
@@ -306,7 +305,7 @@
 
     echo "<h1>Items Loanings</h1>";
 	
-	$items = $db->query("fh_adverts", where : "userID = '" . $uid . "'", safeguard : true, orderBy : ["id" => "DESC"]);
+	$items = $db->query("fh_adverts", "userID = '" . $uid . "'",  true, ["id" => "DESC"]);
 	
 	if($items){
 		echo '<table cellspacing = "15"><tr>';
@@ -335,7 +334,7 @@
 
     echo "<h1>My Credit Ledger</h1>";
 	
-	$transactions = $db->query("fh_ledger", where : "userID = '" . $uid . "'", safeguard : true, orderBy : ["id" => "DESC"]);
+	$transactions = $db->query("fh_ledger", "userID = '" . $uid . "'", true,  ["id" => "DESC"]);
 	
 	if($transactions){
 		echo '<table cellspacing = "15"><tr>';
