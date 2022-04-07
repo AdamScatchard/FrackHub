@@ -8,7 +8,6 @@
 		$database_values["TransactionType"] = -1;
 		$database_values["balance"] = $old_balance;
 		$database_values["changeCredit"] *= -1;
-		
 		$result = $GLOBALS["db"]->insert("fh_ledger", $database_values);
 		
 		if(!$result){
@@ -45,24 +44,22 @@
 	}
 
 	echo "<h1>Account Details</h1>";
-
+	if (isset($_POST['close'])){
+		$db->update("fh_users", ["active"=>0], "id=" . $uid);
+		setcookie($login_cookie, "", time()-3600);
+		setcookie($session_code, "", time()-3600);
+		echo "<h1>Your account has been closed down</h1>";
+		die();
+	}
     if (isset($_POST['submit'])){
     	foreach ($_POST as $key => $value){
-
     		if ($key != "submit"){
-
     		    if ($key == "dob"){
-
     		        if ($value != NULL){
-
     		            $value = trim(strtotime($value));
-
     		        }else{
-
     		            $value = 0;
-
     		        }
-
 	    	    }
 	    	    
 				if ($key == "password"){
@@ -78,9 +75,7 @@
     	$saved = $db->update("fh_users", $database_values, "id='".$uid . "'");	
 
     	if ($saved){
-
     	    echo '<h1 class="announcement">Account Information Updated</h1>';
-
     	}
 
     }
@@ -200,43 +195,26 @@
 
 <?php
     $user = $db->getRow("fh_users", "id=" . $uid);
-
     echo "<form id='regform' name='registrationform' method='post' action='index.php?page=account'>";
-
     echo "<table>";
-
     echo "<tr>";
-
     echo "<tr><td>Username:</td><td>" . $user['username'] . "</td></tr>";
-
     echo "<tr><td>Name:</td><td><input type=\"text\" name=\"name\" value=\"" . $user['name'] . "\"></td></tr>";
-
     echo "<tr><td>Surname:</td><td><input type=\"text\" name=\"surname\" value=\"" . $user['surname'] . "\"></td></tr>";
-
     echo "<tr><td>Password:</td><td><input type=\"password\" name=\"password\" value=\"" . $user['password'] . "\" placeholder\"Enter new password\"></td></tr>";
-
     echo "<tr><td>Phone 1:</td><td><input type=\"text\" name=\"phone1\" value=\"" . $user['phone1'] . "\"></td></tr>";
-
     echo "<tr><td>Phone 2:</td><td><input type=\"text\" name=\"phone2\" value=\"" . $user['phone2'] . "\"></td></tr>"; 
-
     echo "<tr><td>Address Line 1:</td><td><input type=\"text\" name=\"address_line1\" value=\"" . $user['address_line1'] . "\"></td></tr>";
-
     echo "<tr><td>Address Line 2:</td><td><input type=\"text\" name=\"address_line2\" value=\"" . $user['address_line2'] . "\"></td></tr>";
-
     echo "<tr><td>Address Line 3:</td><td><input type=\"text\" name=\"address_line3\" value=\"" . $user['address_line3'] . "\"></td></tr>";
-
     echo "<tr><td>Country:</td><td><input type=\"text\" name=\"country\" value=\"" . $user['country'] . "\"></td></tr>";
-
     echo "<tr><td>Post Code:</td><td><input type=\"text\" name=\"postcode\" value=\"" . $user['postcode'] . "\"></td></tr>";
-
     echo "<tr><td>Email:</td><td><input type=\"email\" name=\"email\" value=\"" . $user['email'] . "\"></td></tr>";
-
     echo "<tr><td>D.O.B:</td><td><input type=\"date\" name=\"dob\" value=\"" . $user['dob'] . "\"></td></tr>";
-
     echo "</table>";
 
     echo "<input type=\"submit\" value=\"Submit\" name='submit' class=\"btn\">";
-
+	echo "<input type=\"submit\" value=\"Close Account\" name='close' class=\"btn\>";
     echo "</form>";
 	
 	echo '<br>';
@@ -246,7 +224,7 @@
 	$credits = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 	echo '<tr>';
 	echo '<td>Credits: ' . $credits . '</td>';
-	echo '<td><input type = "number" name = "top_up_credits" placeholder = "Enter Credits To Top Up" min = "1" required></input></td>';
+	echo '<td><input type = "number" name = "top_up_credits" placeholder = "Enter Credits To Top Up" min = "1" value=0></input></td>';
 	echo '<td><input type = "submit" name = "top_up_submit" value = "Top Up" class = "btn"></input></td>';
 	echo '</tr><table>';
 	echo '</form>';
@@ -257,13 +235,10 @@
 	
 	if($items){
 		echo '<table cellspacing = "15"><tr>';
-
 		foreach($items[0] as $key => $value){
 			echo '<th>' . $key . '</th>';
 		}
-		
 		echo '</tr>';
-		
 		foreach($items as $index => $item){
 			echo '<tr>';
 
