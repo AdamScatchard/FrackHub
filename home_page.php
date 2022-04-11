@@ -2,34 +2,50 @@
 	if (isset($_POST['login_btn'])){
 		// login button clicked
 		$results = $db->query("fh_users", ["id", "username", "password", "email", "timestamp"], "username = '" . $_POST['username'] . "'", True, NULL);
-		$user_data = $db->getRow("fh_users", "username='" . $_POST['username'] . "'");
+		$user_data = $db->getRow("fh_users", "username='" . $_POST['username'] . "' and active='1'");
+    	if ($user_data){
+    		if ($user_data['attempts'] == 3){
+    		    // 3 attempts check for the time
+    			if ((time() - $user_data['lastlogin_timestamp']) > $temporary_lock_time){
+    			    login($encryption, $db, $user_data);
+    			}else{
+    			    echo "<h1>This acccount is temporarely locked</h1>";
+    			}
 
-		$encryption->setPlainText($_POST['password'] . $user_data["username"] . $user_data["email"]. $user_data["timestamp"]);
-
-		if ($user_data["password"] == $encryption->classRun()) {
-			setcookie($login_cookie, $user_data['id'] , $cookie_time);
-			$timeStamp = time();
-			$db->update("fh_users", ["lastlogin_timestamp" => $timeStamp], "id=" . $user_data['id']);
-            $salted_key = $user_data['id'] . $user_data['password'] . $timeStamp . $user_data['timestamp'];
-			$encryption->setPlainText(trim($salted_key));
-            $code = $encryption->classRun();
-            setcookie($session_code,$code , $cookie_time);
-			header ("location:?page=members_home");
-	    	die();
-		}else{
-			echo "access denied";
-		}
+    		}else{
+    		    login($encryption, $db, $user_data);
+    		}
+    	}else{
+	    	echo "<h1>No account associated with these login credentials, please use the register button</h1>";
+	    }
 	}
-    if (isset($uid)){
-        if ($uid > 0){
-            // welcome message for logged in member 
-            // maybe an account summary such as
-            // count of messages unread
-            // count of adverts active
-            // reminder of items due back
-            include ('members_home.php');
-        }
-    }else{
+    loginForm();
+
+    function login($encryption, $db, $user_data){
+        $encryption->setPlainText($_POST['password'] . $user_data["username"] . $user_data["email"]. $user_data["timestamp"]);
+		if ($user_data["password"] == $encryption->classRun()) {
+			setcookie($GLOBALS['login_cookie'], $user_data['id'] , $cookie_time);
+			$timeStamp = time();
+			$db->update("fh_users", ["lastlogin_timestamp" => $timeStamp, "attempts"=>0], "id=" . $user_data['id']);
+			$salted_key = $user_data['id'] . $user_data['password'] . $timeStamp . $user_data['timestamp'];
+			$encryption->setPlainText(trim($salted_key));
+			$code = $encryption->classRun();
+			setcookie($GLOBALS['session_code'],$code , $GLOBALS['cookie_time']);
+			header ("location:?page=members_home");
+			die();
+		}else{
+			
+    		$attempts = $user_data['attempts'];
+    			if ($attempts >= 3){
+    				echo "<h2>Your account is temporarely locked</h2>";
+    			}else{
+    				echo "<h2>You have " . 3 - $attempts . " remaining, you entered the wrong login details</h2>";
+    				$db->update("fh_users", ["attempts" => $attempts + 1, "lastlogin_timestamp"=> time()], "id=" . $user_data['id']);
+    			}
+		}
+    }
+
+    function loginForm(){
         // logged out show login form
         echo "<div class=\"banner\">";
         echo "<div class=\"welcome_msg\">";
@@ -61,6 +77,7 @@
         echo "</div>";
         
         //<!-- // Page content -->
-
+        
     }
+    
 ?>
