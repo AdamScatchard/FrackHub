@@ -49,8 +49,7 @@ form h2 {
 
 }
 
-form input {
-
+form input, form textarea {
 
 	display: block;
 
@@ -60,14 +59,15 @@ form input {
 
 	margin: 5px auto 10px;
 
-	border-radius: 3px;
-
+	border-radius: 20px;
+	background: white;
 	box-sizing : border-box;
-
-	background: transparent;
-
 	border: 1px solid #3E606F;
 
+}
+form textarea{
+    height: 20em;
+    width: 40em;
 }
 
 form input:focus {
@@ -202,17 +202,10 @@ form input:focus {
 
 .banner {
 
-	margin: 5px auto;
-
 	min-height: 400px;
-
 	color: white;
-
-	border-radius: 5px;
-
-	background-image: url('../images/banner.jpg');
-
-	background-size: 100% 100%;
+    background-image: url('../img/parcel.jpg');   
+	background-size: 100%;
 
 }
 
@@ -324,4 +317,4 @@ form input:focus {
 
 	margin-left: 20%;
 
-}
+}	
