@@ -224,7 +224,7 @@
 	$credits = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 	echo '<tr>';
 	echo '<td>Credits: ' . $credits . '</td>';
-	echo '<td><input type = "number" name = "top_up_credits" placeholder = "Enter Credits To Top Up" min = "1" value=0></input></td>';
+	echo '<td><input type = "number" name = "top_up_credits" placeholder = "Enter Credits To Top Up" min = "1" required></input></td>';
 	echo '<td><input type = "submit" name = "top_up_submit" value = "Top Up" class = "btn"></input></td>';
 	echo '</tr><table>';
 	echo '</form>';
@@ -278,73 +278,80 @@
 		echo "<p>NONE</p>";
 	}
 
-    echo "<h1>Items Loanings</h1>";
+    echo "<h1>Items Loaning Out</h1>";
 	
 	$items = $db->query("fh_adverts", "userID = '" . $uid . "'",  true, ["id" => "DESC"]);
-	
-	if($items){
-		echo '<table cellspacing = "15"><tr>';
-
-		foreach($items[0] as $key => $value){
-			echo '<th>' . $key . '</th>';
-		}
-		
-		echo '</tr>';
-		
-		foreach($items as $index => $item){
-			echo '<tr>';
-
-			foreach($item as $key => $value){
-				echo '<td>' . $value . '</td>';
-			}
-
-			echo '</tr>';
-		}
-
-		echo '</table>';
+	if ($items){
+    	echo "<table cellspacing = '15'><tr>";
+        echo "<th>Item No</th>";
+        echo "<th>Borrower</th>";
+        echo "<th>Time and Date</th>";
+        echo "<th>Item</th>";
+        echo "<th>Description</th>";
+        echo "<th>Amount Available</th>";
+        echo "<th>Cost</th>";
+        echo "<th>Active Advert</th>";
+        echo "<th>Available</th>";
+        echo "</tr>";
+    	foreach ($items as $item){
+	        echo "<tr>";
+	        echo "<td><a href='index.php?page=advert&id=" . $item['id'] . "'>" . $item['id'] . "</a></td>";
+	        echo "<td><a href='index.php?page=userprofile&id=" . $item['userID'] . "'>User</a></td>";
+	        echo "<td>" . date('H:i:s d/M/Y', $item['timestamp']) . "</td>";
+	        echo "<td>" . $item['name'] . "</td>";
+	        echo "<td>" . substr($item['description'], 0, 20) . "... </td>";
+	        echo "<td>" . $item['amount_available'] . "</td>";
+	        echo "<td>" . $item['credits'] . "</td>";
+	        echo "<td>" . (($item['active']==1)? "Yes": "No") . "</td>";
+	        echo "<td>" . (($item['available']==1)? "Yes": "No") . "</td>";
+	        echo "</tr>";
+    	}
+    	echo "</table>";
+	}else{
+	    echo "<h2>No items</h2>";
 	}
-	else{
-		echo "<p>NONE</p>";
-	}
-
     echo "<h1>My Credit Ledger</h1>";
 	
-	$transactions = $db->query("fh_ledger", "userID = '" . $uid . "'", true,  ["id" => "DESC"]);
+	$transactions = $db->query("fh_ledger", "userID = '" . $uid . "'", true,  ["timestamp" => "DESC"]);
 	
 	if($transactions){
-		echo '<table cellspacing = "15"><tr>';
+		echo "<table cellspacing = '15'><tr>";
+		echo "<th>Transaction Type</th>";
+		echo "<th>Time and Date</th>";
+		echo "<th>Balance</th>";
+		echo "<th>Credit Change</th>";
+		echo "<th>Advert ID</th>";
+		echo "<th>User</td>";
+		echo "</tr>";
+		foreach($transactions as $transaction){
+    		echo "<tr>";
+    		echo "<td>";
+    		switch($transaction['TransactionType']){
+    		    case 0:
+    		        echo "Top Up";
+    		        break;
+    		    case 1:
+    		        echo "Item Borrowed";
+    		        break;
+    		    case 2:
+    		        echo "Item Loaned";
+    		        break;
+    		    case 3:
+    		        echo "Admin Adjustment";
+    		        break;
+    		} 
+    		
+    		echo "</td>";
+    		echo "<td>" . date('H:i:s d/M/Y',$transaction['timestamp']) . "</td>";
+    		echo "<td>" . $transaction['balance'] . "</td>";
+    		echo "<td>" . $transaction['changeCredit'] . "</td>";
+    		echo "<td>" . (($transaction['advertID']==-1) ? "None" : $transaction['advertID']) . "</td>";
+    		echo "<td>" . $transaction['userID'] . "</td>";
+    		echo "</tr>";
 
-		foreach($transactions[0] as $key => $value){
-			echo '<th>' . $key . '</th>';
 		}
-		
-		echo '</tr>';
-		
-		foreach($transactions as $index => $transaction){
-			echo '<tr>';
-			
-			if ($transaction["viewed"] == 0){
-				$transaction["viewed"] = 1;
-
-				$result = $db->update("fh_ledger", $transaction, "id = '" . $transaction["id"] . "'");
-				
-				if(!$result){
-					echo "There has been an error while updating the credit ledger. Please try again or speak with an administrator.";
-					echo "</tr>";
-					break;
-				}
-			}
-			
-			foreach($transaction as $key => $value){
-				echo '<td>' . $value . '</td>';
-			}
-
-			echo '</tr>';
-		}
-
-		echo '</table>';
-	}
-	else{
-		echo "<p>NONE</p>";
+        echo "</table>";
+	}else{
+	    echo "<h2>No items</h2>";
 	}
 ?>
