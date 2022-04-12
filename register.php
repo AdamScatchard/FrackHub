@@ -9,6 +9,7 @@
 		$database_values['timestamp'] = time();				// timestamp of registration
 		$database_values['ip_address'] = $_SERVER['REMOTE_ADDR'];	// IP address 
 
+
 		foreach ($_POST as $key => $value){
 
 			if ($key != "register"){
@@ -102,8 +103,9 @@
 
 		<input type="text" id="mobile" name="phone2"' . (isset($_POST["phone2"])? ' value = "' . $_POST["phone2"] . '"' : "") . ' placeholder="Mobile" class="form_txtBox">	
 
+        <p class="form_p"Debit/Credit Card (Age Verification):</p>
+        <input type="verify" id="cardnumber" name="cardNumber" class="form_txtBox">
 		<p class="form_p">Password:</p>
-
 		<input type="password" id="username" name="password"' . (isset($_POST["password"])? ' value = "' . $_POST["password"] . '"' : "") . ' class="form_txtBox">
 
 		<p class="form_p">Re-Type Password:</p>' .
@@ -111,6 +113,8 @@
 		//<input type="password" id="username" name="retypedpassword"  class="form_txtBox">
 
 		'<br>
+		<p class="form_p">I agree to <a href="#">Terms and Conditions</a></p>
+		<input type="checkbox" id="termsConditions" required>
 
 		<input type="submit" name="register" class="form_button" id="reg_button" value="Click here to register">
 
