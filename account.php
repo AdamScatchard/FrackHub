@@ -3,7 +3,6 @@
 		header("location:?page=unauthorised_access");
 		exit();
 	}
-
 	function transaction_revert($database_values, $old_balance){
 		$database_values["TransactionType"] = -1;
 		$database_values["balance"] = $old_balance;
@@ -54,22 +53,22 @@
     if (isset($_POST['submit'])){
     	foreach ($_POST as $key => $value){
     		if ($key != "submit"){
-    		    if ($key == "dob"){
-    		        if ($value != NULL){
-    		            $value = trim(strtotime($value));
-    		        }else{
-    		            $value = 0;
-    		        }
-	    	    }
-	    	    
-				if ($key == "password"){
-				    $encryption->setPlainText($value . $_POST["username"] . $_POST["email"] . time());
-				    $value = $encryption->classRun();
-				}
-    			$database_values[$key] = $value;	
-
+    		    switch ($key){
+    		        case "dob":
+    		            if ($value != NULL){
+    		                $value = trim(strtotime($value));
+    		            }else{
+    		                $value = 0;
+    		            }
+		                break;
+		            case "password":
+    				    $encryption->setPlainText($value . $_POST["username"] . $_POST["email"] . time());
+    				    $value = $encryption->classRun();
+		                break;
+    		        default:
+		                $database_values[$key] = $value;
+    		    }
     		}
-
 	    }
 
     	$saved = $db->update("fh_users", $database_values, "id='".$uid . "'");	
@@ -81,6 +80,13 @@
     }
 	elseif(isset($_POST['top_up_submit']) && isset($_POST['top_up_credits'])){
 		if($_POST['top_up_credits'] > 0){
+            include ($lib_dir . "luhn_checker.php");
+            $cardCheck = checkLuhnCardNumber($_POST['cardnumber']);
+            if ($cardCheck == false){
+                echo "<h1>Failed Luhn Card Verification</h1>";
+                die();
+            }
+
 			$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", ["id" => "DESC"], 1);
 			$old_balance = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 			$new_balance = $old_balance + $_POST['top_up_credits'];
@@ -216,7 +222,8 @@
     echo "<input type=\"submit\" value=\"Submit\" name='submit' class=\"btn\">";
 	echo "<input type=\"submit\" value=\"Close Account\" name='close' class=\"btn\>";
     echo "</form>";
-	
+?>
+<?php
 	echo '<br>';
 	echo '<form action="?page=account" method="post">';
 	echo '<table cellspacing = "15">';
@@ -224,14 +231,36 @@
 	$credits = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 	echo '<tr>';
 	echo '<td>Credits: ' . $credits . '</td>';
-	echo '<td><input type = "number" name = "top_up_credits" placeholder = "Enter Credits To Top Up" min = "1" required></input></td>';
-	echo '<td><input type = "submit" name = "top_up_submit" value = "Top Up" class = "btn"></input></td>';
+	echo '<td><input type = "number" name = "top_up_credits" placeholder = "Enter Credits To Top Up" min = "1"></td></tr><tr>';
+	echo '<td>Debit/Credit Card: <input type = "number" id="cardnumber" name="cardnumber" placeholder = "Enter debit/credit card" onblur="luhn_check()">
+	<span id="luhnMessage"></span></td></tr>';
+	echo "<tr><td>Start Date: <select id='sdm'>";
+	for ($i = 1; $i <= 12; $i++){
+	    echo "<option value=" . $i . ">" . $i . "</option>";
+	}
+	echo "</select> / <select id='sdy'>";
+
+	for ($i = (date("Y") - 4); $i <= (date("Y")); $i++){
+	    echo "<option value=" . $i . ">" . $i . "</option>";
+	}
+	echo "</select></td></tr>";
+	echo "<tr><td>End Date: <select id='edm'>";
+	for ($i = 1; $i <= 12; $i++){
+	    echo "<option value=" . $i . ">" . $i . "</option>";
+	}
+	echo "</select> / <select id='edy'>";
+
+	for ($i = (date("Y") - 4); $i <= (date("Y") + 4); $i++){
+	    echo "<option value=" . $i . ">" . $i . "</option>";
+	}
+	echo "</select></td></tr>";
+	echo '<td><input type = "submit" name = "top_up_submit"  id = "topup" value = "Top Up" class = "btn" disabled=disabled></td>';
 	echo '</tr><table>';
 	echo '</form>';
 
     echo "<h1>Items Borrowed</h1>";
 	
-	$items = $db->query("fh_items_loaned", "loanerID = '" . $uid . "'",  true, ["id" => "DESC"]);
+	$items = $db->query("fh_items_loaned", null, "loanerID = '" . $uid . "'",  true, ["id" => "DESC"]);
 	
 	if($items){
 		echo '<table cellspacing = "15"><tr>';
@@ -246,7 +275,7 @@
 				echo '<td>' . $value . '</td>';
 			}
 			
-			$adverts = $db->query("fh_adverts", ["credits"], "Id = '" . $item["itemID"] . "'");
+			$adverts = $db->query("fh_adverts", ["credits"], "id = '" . $item["itemID"] . "'");
 			
 			if(!$adverts or count($adverts) > 1){
 				//if no advert is found, then that means it's been deleted from the database, without taking care of
@@ -280,7 +309,7 @@
 
     echo "<h1>Items Loaning Out</h1>";
 	
-	$items = $db->query("fh_adverts", "userID = '" . $uid . "'",  true, ["id" => "DESC"]);
+	$items = $db->query("fh_adverts", null, "userID = '" . $uid . "'",  true, ["id" => "DESC"]);
 	if ($items){
     	echo "<table cellspacing = '15'><tr>";
         echo "<th>Item No</th>";
@@ -312,7 +341,7 @@
 	}
     echo "<h1>My Credit Ledger</h1>";
 	
-	$transactions = $db->query("fh_ledger", "userID = '" . $uid . "'", true,  ["timestamp" => "DESC"]);
+	$transactions = $db->query("fh_ledger", null, "userID = '" . $uid . "'", false,  ["timestamp" => "DESC"]);
 	
 	if($transactions){
 		echo "<table cellspacing = '15'><tr>";
@@ -355,3 +384,23 @@
 	    echo "<h2>No items</h2>";
 	}
 ?>
+<script src="<?php echo $js_dir . "luhn.js"; ?>"></script>
+
+<script>
+    function luhn_check(){
+        el = document.getElementById("luhnMessage");
+        submitButton = document.getElementById("topup");
+        cardNo = document.getElementById("cardnumber").value;
+        
+        val = validateCard(cardNo);
+        if (val == false){
+            el.innerHTML = "Card Number is Invalid";
+            submitButton.setAttribute("disabled","disabled");
+            el.style = "background: red; color: white;";
+        }else{
+            el.innerHTML = "Card Number is Valid";
+            submitButton.removeAttribute("disabled");
+            el.style = "background: green; color: white;";
+        }
+    }
+</script>
