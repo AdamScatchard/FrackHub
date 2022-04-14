@@ -13,20 +13,30 @@
 		foreach ($_POST as $key => $value){
 
 			if ($key != "register"){
-				if ($key == "dob"){
-				    echo "Value is: " . $value;
-				    if (is_null($value) || trim($value) == ""){
-				        $value = 0;
-				    }else{
-    					$value = strtotime($value);
-				    }
-				}
-				if ($key == "password"){
-				    $encryption->setPlainText($value . $_POST["username"] . $_POST["email"] . $database_values['timestamp']);
-				    $value = $encryption->classRun();
-				}
+			    switch ($key){
+			        case "dob":
+    				    if (is_null($value) || trim($value) == ""){
+    				        $value = 0;
+    				    }else{
+        					$value = strtotime($value);
+    				    }
+			            break;
+			        case "password":
+                        $encryption->setPlainText($value . $_POST["username"] . $_POST["email"] . $database_values['timestamp']);
+                        $value = $encryption->classRun();
+			            break;
+			        case "cardnumber":
+			            include ($lib_dir . "luhn_checker.php");
+                        $cardCheck = checkLuhnCardNumber($_POST['cardnumber']);
+                        if ($cardCheck == false){
+                            echo "<h1>Failed Luhn Card Verification</h1>";
+                            die();
+                        }
+                        break;
+                    default:
+    				$database_values[$key] = $value;	
 
-				$database_values[$key] = $value;	
+			    }
 
 			}
 
@@ -51,7 +61,7 @@
 
 	}
 ?>
-
+<script src="<?php echo $js_dir . "luhn.js"; ?>"></script>
 <?php
 	echo '<form method="post" action="?page=register" name="submit_form" id="register_form" class="form">
 
@@ -103,8 +113,10 @@
 
 		<input type="text" id="mobile" name="phone2"' . (isset($_POST["phone2"])? ' value = "' . $_POST["phone2"] . '"' : "") . ' placeholder="Mobile" class="form_txtBox">	
 
-        <p class="form_p"Debit/Credit Card (Age Verification):</p>
-        <input type="verify" id="cardnumber" name="cardNumber" class="form_txtBox">
+        <p class="form_p">Debit/Credit Card (Age Verification):</p>
+        <input type="verify" id="cardnumber" name="cardnumber" class="form_txtBox" onblur="luhn_check()">
+        <span id="luhnMessage">
+        </span>
 		<p class="form_p">Password:</p>
 		<input type="password" id="username" name="password"' . (isset($_POST["password"])? ' value = "' . $_POST["password"] . '"' : "") . ' class="form_txtBox">
 
@@ -116,9 +128,27 @@
 		<p class="form_p">I agree to <a href="#">Terms and Conditions</a></p>
 		<input type="checkbox" id="termsConditions" required>
 
-		<input type="submit" name="register" class="form_button" id="reg_button" value="Click here to register">
+		<input type="submit" name="register" class="form_button" id="reg_button" disabled value="Click here to register">
 
 		<input type="reset" name="clear" class="form_button" id="clear_button" value="Restart your application form">
 
 	</form>'
 ?>
+<script>
+    function luhn_check(){
+        el = document.getElementById("luhnMessage");
+        submitButton = document.getElementById("reg_button");
+        cardNo = document.getElementById("cardnumber").value;
+        
+        val = validateCard(cardNo);
+        if (val == false){
+            el.innerHTML = "Age verification failed";
+            submitButton.setAttribute("disabled","disabled");
+            el.style = "background: red; color: white;";
+        }else{
+            el.innerHTML = "Age verification passed";
+            submitButton.removeAttribute("disabled");
+            el.style = "background: green; color: white;";
+        }
+    }
+</script>
