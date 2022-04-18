@@ -1,100 +1,94 @@
 <?php
 // code by Adam Mackay
-class mail{
-    function template_email($recipient, $type = "registration", $format = "basic", $uid = 0){
-        switch(strtolower($type)){
-            case "confirmation":
+class emailer{
+
+    function send_email($template_name = null, $user_data = null, $htmlMail = true){
+        switch(strtolower($template_name)){
+            case "registration":
+                $subject = "Registration to Frackhub Services";
+                $html = $this->registration($user_data);
                 break;
-            case "otp":
+            case "forgotten password":
+                $subject = "Forgotten Password";
+                $html = "No forgotten password template producted";
                 break;
-            case "resetpwd":
+            case "closed account":
+                $subject = "Closed account";
+                $html = "no closed account template produced";
                 break;
-            case "ban":
+            case "locked account":
+                $subject = "Locked out";
+                $html = "no locked account template produced";
                 break;
-            case "lockedout":
+            case "unread mail":
+                $subject = "Unread mail";
+                $html = "you have email template not produced";
                 break;
-            case "unknownlocation":
+            case "credits":
+                $html = "no credit or statement template produced";
                 break;
             case "statement":
-                break;
-            case "cancel":
+                $html = "no statement tempalte produced";
                 break;
             default:
                 return false;
         }
-        switch(strtolower($format)){
-            case "basic":
-                $this->send_text($to, $subject, $message);
-                break;
-            case "html":
-                $this->send_html($to, $subject, $message);
-                break;
-            default:
-                $this->send_text($to, $subject, $message);
-                break;
+        $html_email = $this->html_businessHeader();
+        $html_email .= $html;
+        $html_email .= $this->html_businessFooter();
+        
+        $this->send_webmail($user_data['email'], $subject, $html_email);
+    }
+function send_webmail($to, $subject, $message){
+        // basic email with no html
+        $headers  = 'MIME-Version: 1.0' . "\r\n";
+        $headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
+ 
+        // Create email headers
+        $headers .= "From: no-reply@frackhub.co.uk\r\n".
+        'Reply-To: "no-reply@frackhub.co.uk"' . "\r\n" .
+        'X-Mailer: PHP/' . phpversion();
+        try{
+            mail($to,$subject,$message,$headers);
+        }catch(exception $e){
+            echo "Error";
+            die;
         }
     }
     
-    private function send_text($to, $subject, $message){
-        // basic email with no html
-        $headers = "From: no-reply@frachub.co.uk";
-        mail($to,$subject,$txt,$headers);
+    
+    function registration($user_data){
+        $returnString = "";
+        $returnString .= "<h1>Welcome to FrackHub " . $user_data['name'] . "</h1>";
+        $returnString .= "<br>";        
+        $returnString .= "<p>Your free membership has begun, all that is required from you is to verify your email address<br>";
+        $returnString .= "click following link to  <a href='https://frackhub.000webhostapp.com/index.php?page=register&linkverify=" . $user_data['verification'] . "'>verify your email address</a>";
+        $returnString .="<br><br>";
+        $returnString .= "<h2>Important information:<h2>";
+        $returnString .= "<p>We ask all members to adhere to the community guidelines and the advertising policies.<br>";
+        $returnString .= "You can always contact loaners via the advert email button<br>";
+        $returnString .= "We are always happy to hear from you, in the event you feel the need to ask for help<br>";
+        $returnString .= "or support, simply click on contact us from the menu once you have logged in</p>";
+        $returnString .= "<br>";
+        return $returnString;
     }
     
-    private function send_html(){
-        $to = "somebody@example.com, somebodyelse@example.com";
-        $subject = "HTML email";
-        
-        $message = "
-        <html>
-        <head>
-        <title>HTML email</title>
-        </head>
-        <body>
-        <p>This email contains HTML Tags!</p>
-        <table>
-        <tr>
-        <th>Firstname</th>
-        <th>Lastname</th>
-        </tr>
-        <tr>
-        <td>John</td>
-        <td>Doe</td>
-        </tr>
-        </table>
-        </body>
-        </html>
-        ";
-        
-        // Always set content-type when sending HTML email
-        $headers = "MIME-Version: 1.0" . "\r\n";
-        $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-        
-        // More headers
-        $headers .= 'From: <webmaster@example.com>' . "\r\n";
-        $headers .= 'Cc: myboss@example.com' . "\r\n";
-        
-        mail($to,$subject,$message,$headers);
+    
+    function html_businessHeader(){
+        // HTML Header
+        $returnString = "<html><header>";
+        $returnString .= "<div id='logo'>";
+        $returnString .= "<img alt='Frackhub services' src='img/logo.png' class='email_logo'>";
+        $returnString .= "</header>";
+        $returnString .= "<hr>";
+        return $returnString;
     }
     
-    private function new_user(){
     
-    }
-    
-    private function password_reset(){
-    
-    }
-    
-    private function ban(){
-    
-    }
-    
-    function communication(){
-    
-    }
-    
-    private function x(){
-    
+    function html_businessFooter(){
+        $returnString = "<footer>&copy;Copyright Frackhub Services Ltd " . date('Y') . "</footer></html>";
+        return $returnString;
     }
 }
+
 ?>
