@@ -14,8 +14,34 @@
         private $encodeString;
         private $encodeString2;
     
+        public function resetValues(){
+            $this->plaintext = NULL;
+            $this->plaintextArray = NULL;
+            $this->arrayConvert = NULL;
+            $this->errorMessage = NULL;
+            // ignore resetting private key
+            $this->caesarConvert = NULL;
+            $this->hexConvert = NULL;
+            $this->hexScramble = NULL;
+            $this->hexScramble2 = NULL;
+            $this->encodeString = NULL;
+            $this->encodeString2 = NULL;
+            
+        } 
+        // testing and debugging getters
+        public function getPlainText(){
+            return $this->plaintext;
+        }
+        
+        public function getPrivateKey(){
+            return $this->privateKey;
+        }
+        
+        
         //Public function setting value for plaintext.
-        public function  setPlainText($plaintext){
+        public function setPlainText($plaintext){
+            // reset all values, incase obj ran twice
+            $this->resetValues();
             $this->plaintext = $plaintext;
         }
 
@@ -27,7 +53,6 @@
             $output = $this->hexConversion($output);
             $output = $this->arrayScramble($output);
             $output = $this->encodeArray($output);
-
             return $output;
         }
         
