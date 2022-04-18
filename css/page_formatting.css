@@ -10,6 +10,17 @@
 
 html { height: 100%; box-sizing: border-box; }
 
+.uidBar {
+    line-height: 1.5em;
+    font-size: 1em;
+    letter-spacing: 6pt;
+}
+.icon{
+    height: 32px;
+    width: 32px;
+}
+
+
 body {
 
   position: relative;
@@ -256,11 +267,8 @@ form input:focus {
 	width: 30%;
 
 	margin: 20px 0px;
-
+    font-size: 10pt;
 	padding: 12px 15px;
-
-	font-size: 1.2em;
-
 	text-decoration: none;
 
 }
@@ -317,4 +325,4 @@ form input:focus {
 
 	margin-left: 20%;
 
-}	
+}
