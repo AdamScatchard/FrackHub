@@ -15,6 +15,7 @@ $lib_dir = "libs/";
 $css_dir = "css/";
 $js_dir = "js/";
 $inc_dir = "inc/";
+$img_dir = "img/";
 
 $home_page = "home_page.php";
 
@@ -23,8 +24,9 @@ $home_page = "home_page.php";
 $cookie_time = time() + 3600;
 $login_cookie = "frackhub";
 $session_code = "fh_session";
-$temporary_lock_time = 900;     // setting implemented for Saxons security settings (Adam MacKay)
+$temporary_lock_time = 900;
 
+$homepage_adverts = 10;
 // time to delete inactive accounts
 $expire_accounts = 15811200;
 
