@@ -207,8 +207,8 @@ class db{
 	function getRow($table, $where){
 		// expand on this in the future.
 		$sql = "SELECT * FROM " . $table . " WHERE " . $where;
-		if (isset($_POST['debug'])){
-		    if ($_POST['debug'] == "true"){
+		if (isset($_GET['debug'])){
+		    if ($_GET['debug'] == "true"){
 		        echo $sql;
 		    }
 		}
