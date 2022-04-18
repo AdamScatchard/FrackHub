@@ -87,7 +87,7 @@
                 die();
             }
 
-			$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", ["id" => "DESC"], 1);
+		    $latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", false, ["timestamp" => "DESC"], 1);
 			$old_balance = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 			$new_balance = $old_balance + $_POST['top_up_credits'];
 			$database_values = ["userID" => $uid, "advertID" => -1, "TransactionType" => 0, "ip_address" => $_SERVER['REMOTE_ADDR'],
@@ -227,7 +227,7 @@
 	echo '<br>';
 	echo '<form action="?page=account" method="post">';
 	echo '<table cellspacing = "15">';
-	$latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", ["id" => "DESC"], 1);
+    $latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", false, ["timestamp" => "DESC"], 1);
 	$credits = $latest_transaction? $latest_transaction[0]["balance"] : 0;
 	echo '<tr>';
 	echo '<td>Credits: ' . $credits . '</td>';
