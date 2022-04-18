@@ -3,15 +3,31 @@
 
 	echo "<br>";
 
+    if (isset($_GET['linkverify'])){
+        $verificationCode = $_GET['linkverify'];
+        $user_data = $db->getRow("fh_users", "verification = '" .  $verificationCode . "' AND active = 0");
+        if ($user_data){
+            $done = $db->update("fh_users", ["active"=>1], "id=" . $user_data['id']);
+            if ($done){
+                echo "<h1>Your account is now active</h1>";
+                echo "Please go to the home page to sign in";
+                die;
+            }else{
+                echo "<h1>Error:</h1>";
+                echo "unable to specify what happened, but the resgistration failed";
+                die;
+            }
+        }
+    }
+
 	if (isset($_POST['register'])){
 
 		// create database values to store in the database
 		$database_values['timestamp'] = time();				// timestamp of registration
 		$database_values['ip_address'] = $_SERVER['REMOTE_ADDR'];	// IP address 
-
-
+        $encryption->setPlainText($_POST["username"] . $_POST['email'] . $_POST['password'] . time() . strtotime($_POST['dob']));
+        $database_values['verification'] = $encryption->classRun();
 		foreach ($_POST as $key => $value){
-
 			if ($key != "register"){
 			    switch ($key){
 			        case "dob":
@@ -20,10 +36,12 @@
     				    }else{
         					$value = strtotime($value);
     				    }
+        				$database_values[$key] = $value;	
 			            break;
 			        case "password":
                         $encryption->setPlainText($value . $_POST["username"] . $_POST["email"] . $database_values['timestamp']);
                         $value = $encryption->classRun();
+        				$database_values[$key] = $value;	
 			            break;
 			        case "cardnumber":
 			            include ($lib_dir . "luhn_checker.php");
@@ -39,26 +57,35 @@
 			    }
 
 			}
-
 		}
 
 
-		
-
-		$saved = $db->insert("fh_users", $database_values);	
-
-		if ($saved){
-
-			//forward to relevant confirmation page
-
+		$userExist = $db->getRow("fh_users", "username='" . $database_values['username'] . "'");
+		if ($userExist){
+		    echo "<h1>Account Exists Already</h1>";
 		}else{
-
-			echo "Unable to register, try again or speak with administration";
-
-			// developers to repopulate the values into the HTML textbox values
-
+    		$saved = $db->insert("fh_users", $database_values);	
+              
+    		if ($saved){
+                    $user_data = $db->getRow("fh_users", "username='" . $database_values['username'] . "'");
+                    include ($lib_dir . "email_class.php");
+                    $e_mail = new emailer();
+                    if ($user_data){
+                        $e_mail->send_email("registration", $user_data );
+                    }else{
+                        echo "<h1>Error</h1>";
+                    }
+                    echo "<h1>Please check your email address " . $database_values['email'] . "</h1>";
+                    echo "<p>You will need to activate your account before you can begin to use Frackhub</p>";
+                    die;
+    		}else{
+    
+    			echo "Unable to register, try again or speak with administration";
+    
+    			// developers to repopulate the values into the HTML textbox values
+    
+    		}
 		}
-
 	}
 ?>
 <script src="<?php echo $js_dir . "luhn.js"; ?>"></script>
