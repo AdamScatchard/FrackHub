@@ -69,4 +69,4 @@
 	<input type="reset" name="clear" class="form_button" id="clear_button" value="Clear">
 
 	</form>'
-?>
+?>	
