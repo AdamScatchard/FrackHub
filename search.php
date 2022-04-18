@@ -16,7 +16,7 @@
             echo "<table><tr><th>Name</th><th>Description</th></tr>";
             foreach ($res as $result){
                 echo "<tr>";
-                echo "<td>" . $result['name'] . "</td>";
+                echo "<td><a href=\"index.php?page=item&view_item=" . $result['id'] . "\">" . $result['name'] . "</a></td>";
                 echo "<td>" . $result['description'] . "</td>";
                 echo "</tr>";
             }
@@ -25,5 +25,4 @@
             echo "<h1>No results located for: '" . $str . "'</h1>";
         }
     }
-// code written by Adam Mackay (2000418)
 ?>
