@@ -5,6 +5,8 @@
 	}
 
 	setcookie($login_cookie, "", time()-3600);
+	setcookie($session_code, "", time()-3600);
+
 	header("location:?page=home_page");
 	exit();
 
