@@ -1,3 +1,16 @@
+<?php
+if (isset($uid)){
+    $latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", false, ["timestamp" => "DESC"], 1);
+	$credits = $latest_transaction? $latest_transaction[0]["balance"] : 0;
+    echo '<div class="uidBar">';
+    echo "<img alt='user' class='icon' src=" . $img_dir . "user.png>";
+    echo "Username: " . $user['username'];
+    echo " | ";
+    echo "<img alt='credits' class='icon' src=" . $img_dir . "credit.png>";
+    echo " Credits: " . $credits;
+    echo "</div>";
+}
+?>
 <div class="navbar">
 	<div class="logo_div">
 		<a href="index.php"><h1>FrackHub</h1></a>
