@@ -75,10 +75,11 @@
 								// We are on the log out page, so lets show logout.php
 								$visiting_page = "logout.php";
 							}
+						
 						}
 					}else{
-						// no data for this access check or page is						
-						$visiting_page = $home_page;
+						// no data for this access check or page is
+						$visiting_page = "account.php";
 					}
 				}else{
 					// There is no user credentials, establish the page
@@ -115,12 +116,18 @@
 					case "register":
 						$visiting_page = "register.php";
 						break;
+					case "item":
+					    $visiting_page = "item.php";
+					    break;
 					case "logout":
 						$visiting_page = "logout.php";
 						break;
+					case "test_page":
+					    $visiting_page = "test_page.php";
+					    break;
 					default:
-						$visiting_page = $home_page;
-				}
+			    		$visiting_page = $_GET['page'] . ".php";
+			     }
 			}else{
 				$visiting_page = $home_page;
 			}
