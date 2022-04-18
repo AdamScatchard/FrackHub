@@ -31,7 +31,7 @@
 			$encryption->setPlainText(trim($salted_key));
 			$code = $encryption->classRun();
 			setcookie($GLOBALS['session_code'],$code , $GLOBALS['cookie_time']);
-			header ("location:?page=members_home");
+			header ("location:?page=account");
 			die();
 		}else{
 			
@@ -50,12 +50,10 @@
         echo "<div class=\"banner\">";
         echo "<div class=\"welcome_msg\">";
         echo "<h1>Make use of your junk with Frack Hub</h1>";
-        echo "<p>Use And Submit Your</p><br>"; 
-        echo "Items And<br>"; 
-        echo "Gain Credit! <br>";
+        echo "<p>Use And Submit Your Items And<br>Gain Credit! <br></p><br>"; 
         echo "<span>👩‍🦳👩‍🍳🧑👨‍🔧</span>";
         echo "</p>";
-        echo "<a href=\"index.php?page=register\" class=\"btn\">Join Here</a>";
+        echo "<a href=\"index.php?page=register\" class=\"btn\">Sign Up</a>";
         echo "</div>";
         echo ("<div class=\"login_div\">");
 		echo ("<form action=\"" . $_SERVER['PHP_SELF'] . "\" method=\"post\" >");        
@@ -71,9 +69,12 @@
 
         echo "<h2 class=\"content-title\">Recent Items Submitted:</h2>";
         echo ("<hr>");
-
-        //	<!-- more content still to come here ... -->
-        
+    	$results = $GLOBALS['db']->query("fh_adverts", NULL, NULL, true, ["id"=>"DESC"], $GLOBALS['homepage_adverts']);
+        foreach ($results as $result){
+            echo "<li><a href='index.php?page=item&view_item=" . $result['id'] . "'>" . $result['name'] . "</a>";
+            echo "<li>" . $result['description'];
+            echo "<hr>";
+        }
         echo "</div>";
         
         //<!-- // Page content -->
