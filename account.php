@@ -1,8 +1,6 @@
 <?php
-	if (!isset($uid)){
-		header("location:?page=unauthorised_access");
-		exit();
-	}
+    permission_check("account");
+
 	function transaction_revert($database_values, $old_balance){
 		$database_values["TransactionType"] = -1;
 		$database_values["balance"] = $old_balance;
@@ -42,14 +40,17 @@
 		return true;
 	}
 
-	echo "<h1>Account Details</h1>";
-	if (isset($_POST['close'])){
+    
+    // Close an account (Adam M)
+    if (isset($_POST['close'])){
 		$db->update("fh_users", ["active"=>0], "id=" . $uid);
 		setcookie($login_cookie, "", time()-3600);
 		setcookie($session_code, "", time()-3600);
 		echo "<h1>Your account has been closed down</h1>";
 		die();
 	}
+	
+	//Edit Account Info (Adam M)
     if (isset($_POST['submit'])){
     	foreach ($_POST as $key => $value){
     		if ($key != "submit"){
@@ -60,25 +61,77 @@
     		            }else{
     		                $value = 0;
     		            }
+		                $database_values[$key] = $value;
 		                break;
 		            case "password":
-    				    $encryption->setPlainText($value . $_POST["username"] . $_POST["email"] . time());
-    				    $value = $encryption->classRun();
+						if ($value != ""){
+        				    $encryption->setPlainText($value . $_POST["username"] . $_POST["email"] . time());
+        				    $value = $encryption->classRun();
+        				    $database_values[$key] = $value;
+						}
 		                break;
     		        default:
 		                $database_values[$key] = $value;
     		    }
     		}
 	    }
-
     	$saved = $db->update("fh_users", $database_values, "id='".$uid . "'");	
-
     	if ($saved){
     	    echo '<h1 class="announcement">Account Information Updated</h1>';
+    	    $user = $db->getRow("fh_users", "id='" . $uid . "'");
     	}
-
     }
-	elseif(isset($_POST['top_up_submit']) && isset($_POST['top_up_credits'])){
+    
+
+    // return items    
+    if(isset($_POST['return_item'])){
+        $transaction = $db->getRow("fh_items_loaned", "id='" . $_POST['return_item'] . "'");
+        $advert = $db->getRow("fh_adverts", "id='" . $transaction['itemID'] . "'");
+        $returnedAmt = $advert['amount_available'] + $transaction['amount_loaned'];
+        // calculate credits charge
+        // calculate days
+        $days = intval((time() - $transaction['timestamp']) / 86400) + 1;
+        $charge = ($advert['credits'] * $transaction['amount_loaned']) * $days;
+        if ($credits > $charge){
+            // Loaners Balance Changes
+            $credits -= $charge;
+            $newData['userID'] =$uid;
+            $newData['advertID']=$advert['id'];
+            $newData['transactionType']=1;
+            $newData['ip_address'] = $_SERVER['REMOTE_ADDR'];
+            $newData['timestamp'] = time();
+            $newData['balance'] = $credits;
+            $newData['changeCredit'] = $charge;
+            $newData['viewed'] = 0;
+            $db->insert("fh_ledger", $newData);
+            $returned = $db->update("fh_adverts", ['amount_available' => $returnedAmt, 'available'=>1], "id='" . $advert['id'] . "'" );
+            $returned = $db->delete("fh_items_loaned", "id=" . $transaction['id']);
+            
+            // now top up the loaners account
+            $utp = $db->query("fh_ledger", null, "userID='" . $advert['userID'] . "'", false, ['timestamp' => "DESC"], 1);
+            // credits
+            $newData['userID'] =$advert['userID'];
+            $newData['advertID']=$advert['id'];
+            $newData['transactionType']=2;
+            $newData['ip_address'] = $_SERVER['REMOTE_ADDR'];
+            $newData['balance'] = $utp[0]['balance'] += $charge;
+            $newData['changeCredit'] = $charge;
+            $newData['viewed'] = 0;
+            $db->insert("fh_ledger", $newData);
+
+            if ($returned){
+                echo "Item returned";
+            }else{
+                echo "There has been an issue returning this item";
+            }
+         
+        }else{
+            echo "You have insufficient credits to return this item";
+        }
+	}
+    
+    // Topup credit (Adam M & Christian)
+    if(isset($_POST['top_up_submit']) && isset($_POST['top_up_credits'])){
 		if($_POST['top_up_credits'] > 0){
             include ($lib_dir . "luhn_checker.php");
             $cardCheck = checkLuhnCardNumber($_POST['cardnumber']);
@@ -103,232 +156,122 @@
 			echo '<h1 class="announcement">Error, cannot top up 0 credits.</h1>';
 		}
 	}
-	elseif(isset($_POST['return_item'])){
-		$items_loaned = $db->query("fh_items_loaned", "id = '" . $_POST['return_item'] . "'", true);
-
-		//making sure the user who owns the item is the one making the request to return it
-		if(!$items_loaned || $items_loaned[0]["loanerID"] != $uid){
-			echo '<h1 class="announcement">There has been an error while trying to return the item. Try again or speak to an administrator.</h1>';
-		}
-		elseif(count($items_loaned) > 1){
-			echo '<h1 class="announcement">Something has gone terribly wrong with the database. Please notify an administrator.</h1>'; 
-		}
-		else{
-			$item_loaned = $items_loaned[0];
-			$original_adverts = $db->query("fh_adverts", "Id = '" . $item_loaned["itemID"] . "'", true);
-			
-			if(!$original_adverts or count($original_adverts) > 1){
-				//if no advert is found, then that means it's been deleted from the database, without taking care of
-				//loaned items, which is bad.
-				echo "Something has gone terribly wrong with the database. Please notify an administrator.";
-			}
-			else{
-				$original_advert = $original_adverts[0];
-
-				//the exact formula still needs to be implemented. just putting it as credits per day for now
-				//also should change it so it grabs the credits value from the moment it was loaned, not from the current advert
-				$credits = $original_advert["credits"] * $item_loaned["amount_loaned"] * (time() - $item_loaned["timestamp"]) / 86400; //86400 is the amount of seconds in a day
-				//putting it to integer since that's what the database uses
-				$credits = (int) $credits;
-
-				$loaner_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", ["id" => "DESC"],1);
-				$loaner_old_balance = $loaner_latest_transaction? $loaner_latest_transaction[0]["balance"] : 0;
-				$loaner_new_balance = $loaner_old_balance - $credits;
-				$loaner_database_values = ["userID" => $uid, "advertID" => $item_loaned["itemID"], "TransactionType" => 1, "ip_address" => $_SERVER['REMOTE_ADDR'],
-				"timestamp" => time(), "viewed" => 0, "balance" => $loaner_new_balance, "changeCredit" => -$credits];
-				
-				$result = transaction($loaner_database_values, $loaner_old_balance);
-				
-				if($result){
-					//everything is good for the loaner. now need to give the credits to the borrower
-					$borrower_latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $original_advert["userID"] . "'",  ["id" => "DESC"], 1);
-					$borrower_old_balance = $borrower_latest_transaction? $borrower_latest_transaction[0]["balance"] : 0;
-					$borrower_new_balance = $borrower_old_balance + $credits;
-					$borrower_database_values = ["userID" => $original_advert["userID"], "advertID" => $item_loaned["itemID"], "TransactionType" => 2, "ip_address" => $_SERVER['REMOTE_ADDR'],
-					"timestamp" => time(), "viewed" => 0, "balance" => $borrower_new_balance, "changeCredit" => $credits];
-					
-					$result = transaction($borrower_database_values, $borrower_old_balance);
-					$error = false;
-
-					if($result){
-						$updated_advert = $original_advert;
-						$updated_advert["amount_available"] += $item_loaned["amount_loaned"];
-						
-						if($updated_advert["available"] == 0 && $updated_advert["amount_available"] > 0){
-							$updated_advert["available"] = 1;
-						}
-
-						$result = $db->update("fh_adverts", $updated_advert, "id = '" . $item_loaned["itemID"] . "'");
-						
-						if($result){
-							$result = $db->delete("fh_items_loaned", "id = '" . $item_loaned["id"] . "'");		
-							if($result){
-								echo '<h1 class="announcement">Item Successfuly returned. "' . $credits . '" credits have been deducted.</h1>';
-							}
-							else{
-								$error = true;
-							}
-							
-							if($error){
-								$result = $db->update("fh_adverts", $original_advert, "id = '" . $item_loaned["itemID"] . "'");
-								
-								if(!$result){
-									//if the revert fails, it's bad
-									echo '<h1 class="announcement">Something has gone terribly wrong with the database. Please notify an administrator.</h1>';
-								}
-							}
-						}
-						else{
-							$error = true;
-						}
-						
-						if($error){
-							transaction_revert($borrower_database_values, $borrower_old_balance);
-						}
-					}
-					else{
-						$error = true;
-					}
-					
-					if($error){
-						transaction_revert($loaner_database_values, $loaner_old_balance);
-					}
-				}
-			}
-		}
-	}
-?>
-
-<?php
-    $user = $db->getRow("fh_users", "id=" . $uid);
+    
+    echo "<h2>Account Information: </h2>";
+    echo "<hr>";
+    echo "<div id='container'>";
+    
+    echo "<div id='account_data' class='column contactContainer'>";
     echo "<form id='regform' name='registrationform' method='post' action='index.php?page=account'>";
+    echo "<h3 class='subheading'>My Data</h3>";
     echo "<table>";
-    echo "<tr>";
-    echo "<tr><td>Username:</td><td>" . $user['username'] . "</td></tr>";
-    echo "<tr><td>Name:</td><td><input type=\"text\" name=\"name\" value=\"" . $user['name'] . "\"></td></tr>";
-    echo "<tr><td>Surname:</td><td><input type=\"text\" name=\"surname\" value=\"" . $user['surname'] . "\"></td></tr>";
-    echo "<tr><td>Password:</td><td><input type=\"password\" name=\"password\" value=\"" . $user['password'] . "\" placeholder\"Enter new password\"></td></tr>";
-    echo "<tr><td>Phone 1:</td><td><input type=\"text\" name=\"phone1\" value=\"" . $user['phone1'] . "\"></td></tr>";
-    echo "<tr><td>Phone 2:</td><td><input type=\"text\" name=\"phone2\" value=\"" . $user['phone2'] . "\"></td></tr>"; 
-    echo "<tr><td>Address Line 1:</td><td><input type=\"text\" name=\"address_line1\" value=\"" . $user['address_line1'] . "\"></td></tr>";
-    echo "<tr><td>Address Line 2:</td><td><input type=\"text\" name=\"address_line2\" value=\"" . $user['address_line2'] . "\"></td></tr>";
-    echo "<tr><td>Address Line 3:</td><td><input type=\"text\" name=\"address_line3\" value=\"" . $user['address_line3'] . "\"></td></tr>";
-    echo "<tr><td>Country:</td><td><input type=\"text\" name=\"country\" value=\"" . $user['country'] . "\"></td></tr>";
-    echo "<tr><td>Post Code:</td><td><input type=\"text\" name=\"postcode\" value=\"" . $user['postcode'] . "\"></td></tr>";
-    echo "<tr><td>Email:</td><td><input type=\"email\" name=\"email\" value=\"" . $user['email'] . "\"></td></tr>";
-    echo "<tr><td>D.O.B:</td><td><input type=\"date\" name=\"dob\" value=\"" . $user['dob'] . "\"></td></tr>";
+    echo "<tr><td>Name:</td><td><input type='text' name='name' value='" . $user['name'] . "'></td></tr>";
+    echo "<tr><td>Surname:</td><td><input type='text' name='surname' value='" . $user['surname'] . "'></td></tr>";
+    echo "<tr><td>Password:</td><td><input id='pwd' type='password' name='password'  onchange='verifyFields(\"pwd\", \"pwd2\", \"pwdMessage\");'></td></tr>";
+    echo "<tr><td>Re-Enter Password:</td><td><input id='pwd2' type='password' onchange='verifyFields(\"pwd\", \"pwd2\", \"pwdMessage\");' ><span id='pwdMessage'></span></td></tr>";
+    echo "<tr><td>Phone 1:</td><td><input type='text' name='phone1' value='" . $user['phone1'] . "'></td></tr>";
+    echo "<tr><td>Phone 2:</td><td><input type='text' name='phone2' value='" . $user['phone2'] . "'></td></tr>";
+    echo "<tr><td>House No:</td><td><input type='text' name='address_line1' value='" . $user['address_line1'] . "'></td></tr>";
+    echo "<tr><td>Street:</td><td><input type='text' name='address_line2' value='" . $user['address_line2'] . "'></td></tr>";
+    echo "<tr><td>City:</td><td><input type='text' name='address_line3' required value='" . $user['address_line3'] . "'></td></tr>";
+    echo "<tr><td>Country:</td><td><input type='text' name='country' value='" . $user['country'] . "'></td></tr>";
+    echo "<tr><td>Post Code:</td><td><input type='text' name='postcode' value='" . $user['postcode'] . "'></td></tr>";
+    echo "<tr><td>Email:</td><td><input type='text' name='email' value='" . $user['email'] . "'></td></tr>";
+    echo "<tr><td>DoB:</td><td><input type='date' id='dob' name='dob' value='" .  date('Y-m-d',$user['dob']) . "' onblur='ageVerification(this, \"dobSign\");'><span id='dobSign'></span></td></tr>";
     echo "</table>";
-
-    echo "<input type=\"submit\" value=\"Submit\" name='submit' class=\"btn\">";
-	echo "<input type=\"submit\" value=\"Close Account\" name='close' class=\"btn\>";
+    echo "<input type='submit' id='updateAcc' value='Submit' name='submit' class='btn' >";
+    echo "<input type='submit' value='Close Account' name='close' class='btn'>";
     echo "</form>";
-?>
-<?php
-	echo '<br>';
-	echo '<form action="?page=account" method="post">';
-	echo '<table cellspacing = "15">';
+    echo "</div>";
+    
+    echo "<div id='credit_data' class='column contactContainer'>";
+    echo "<h3 class='subheading'>Credits</h3>";
+
     $latest_transaction = $db->query("fh_ledger", ["balance"], "userID = '" . $uid . "'", false, ["timestamp" => "DESC"], 1);
 	$credits = $latest_transaction? $latest_transaction[0]["balance"] : 0;
+	echo '<form action="?page=account" method="post">';
+	echo '<table>';
 	echo '<tr>';
-	echo '<td>Credits: ' . $credits . '</td>';
-	echo '<td><input type = "number" name = "top_up_credits" placeholder = "Enter Credits To Top Up" min = "1"></td></tr><tr>';
-	echo '<td>Debit/Credit Card: <input type = "number" id="cardnumber" name="cardnumber" placeholder = "Enter debit/credit card" onblur="luhn_check()">
-	<span id="luhnMessage"></span></td></tr>';
-	echo "<tr><td>Start Date: <select id='sdm'>";
+	echo '<td>Credits: </td>';
+	echo '<td><input type = "number" required name = "top_up_credits" placeholder = "Enter Credits To Top Up" min = "1"></td></tr><tr>';
+	echo '<td>Debit/Credit Card:</td><td><input type = "number" id="cardnumber" name="cardnumber" placeholder = "Enter debit/credit card" onblur="luhn_check()"><span id="luhnMessage"></span></td></tr>';
+	echo "<tr><td>Start Date:</td>";
+	echo "<td><select id='sdm'>";
 	for ($i = 1; $i <= 12; $i++){
 	    echo "<option value=" . $i . ">" . $i . "</option>";
 	}
 	echo "</select> / <select id='sdy'>";
-
 	for ($i = (date("Y") - 4); $i <= (date("Y")); $i++){
 	    echo "<option value=" . $i . ">" . $i . "</option>";
 	}
 	echo "</select></td></tr>";
-	echo "<tr><td>End Date: <select id='edm'>";
+	
+	echo "<tr><td>End Date:</td>";
+	echo "<td><select id='edm'>";
 	for ($i = 1; $i <= 12; $i++){
 	    echo "<option value=" . $i . ">" . $i . "</option>";
 	}
 	echo "</select> / <select id='edy'>";
-
 	for ($i = (date("Y") - 4); $i <= (date("Y") + 4); $i++){
 	    echo "<option value=" . $i . ">" . $i . "</option>";
 	}
 	echo "</select></td></tr>";
 	echo '<td><input type = "submit" name = "top_up_submit"  id = "topup" value = "Top Up" class = "btn" disabled=disabled></td>';
-	echo '</tr><table>';
+
+
+	echo '</tr>';
+	echo '</table>';
 	echo '</form>';
+    echo "<br>";
+    echo "<h3 class='subheading'>Credit Statement</h3>";
+	$transactions = $db->query("fh_ledger", null, "userID = '" . $uid . "'", false,  ["timestamp" => "DESC"], 10);
+	
+	if($transactions){
+		echo "<table><tr>";
+		echo "<th>From/For</th>";
+		echo "<th>Bal Change</th>";
+		echo "<th>Balance</th>";
+		echo "<th>Time and Date</th>";
 
-    echo "<h1>Items Borrowed</h1>";
-	
-	$items = $db->query("fh_items_loaned", null, "loanerID = '" . $uid . "'",  true, ["id" => "DESC"]);
-	
-	if($items){
-		echo '<table cellspacing = "15"><tr>';
-		foreach($items[0] as $key => $value){
-			echo '<th>' . $key . '</th>';
+		echo "</tr>";
+		foreach($transactions as $transaction){
+    		echo "<tr>";
+    		$loaner = $db->getRow("fh_adverts", "id=" . $transaction['advertID']);
+    		if ($loaner){
+        		echo "<td>" . (($transaction['TransactionType']==0) ? "TopUp" : "<a href='index.php?page=item&view_item=" . $transaction['advertID'] . "'>" . $loaner['name'] . "</a>") . "</td>";
+    		}else{
+    		    echo "<td>" . (($transaction['TransactionType']==0) ? "TopUp" : "<a href='index.php?page=item&view_item=" . $transaction['advertID'] . "'>Unknown Advert</a>") . "</td>";
+    		}
+    		echo "<td>" . $transaction['changeCredit'] . "</td>";
+    		echo "<td>" . $transaction['balance'] . "</td>";
+    		echo "<td>" . date('H:i:s d/M/Y',$transaction['timestamp']) . "</td>";
+    		
+            echo "</tr>";
+
 		}
-		echo '</tr>';
-		foreach($items as $index => $item){
-			echo '<tr>';
-
-			foreach($item as $key => $value){
-				echo '<td>' . $value . '</td>';
-			}
-			
-			$adverts = $db->query("fh_adverts", ["credits"], "id = '" . $item["itemID"] . "'");
-			
-			if(!$adverts or count($adverts) > 1){
-				//if no advert is found, then that means it's been deleted from the database, without taking care of
-				//loaned items, which is bad.
-				echo "Something has gone terribly wrong with the database. Please notify an administrator.";
-				echo "</tr>";
-				break;
-			}
-			
-			$advert = $adverts[0];
-			//the exact formula still needs to be implemented. just putting it as credits per day for now
-			//also should change it so it grabs the credits value from the moment it was loaned, not from the current advert
-			$credits = $advert["credits"] * $item["amount_loaned"] * (time() - $item["timestamp"]) / 86400; //86400 is the amount of seconds in a day
-			//putting it to integer since that's what the database uses
-			$credits = (int) $credits;
-
-			echo '<td>Current credits cost: ' . $credits .' (Note this value may change by the time the return process is completed)</td>';
-			
-			echo '<td><form action="?page=account" method="post">';
-			echo '<button type = "submit" name = "return_item" value = "' . $item["id"] . '" class = "btn">Return Item</button>';
-			echo '</td>';
-
-			echo '</tr>';
-		}
-
-		echo '</table>';
+        echo "</table>";
+        echo "<p><a href='#'>more...</a>";
+	}else{
+	    echo "<h2>No items</h2>";
 	}
-	else{
-		echo "<p>NONE</p>";
-	}
+    
+    echo "</div>";
+    
+    echo "<div id='items_borrowed' class='column contactContainer'>";
 
-    echo "<h1>Items Loaning Out</h1>";
-	
+    echo "<h3 class='subheading'>Items Advertised</h3>";
 	$items = $db->query("fh_adverts", null, "userID = '" . $uid . "'",  true, ["id" => "DESC"]);
 	if ($items){
-    	echo "<table cellspacing = '15'><tr>";
-        echo "<th>Item No</th>";
-        echo "<th>Borrower</th>";
-        echo "<th>Time and Date</th>";
-        echo "<th>Item</th>";
-        echo "<th>Description</th>";
-        echo "<th>Amount Available</th>";
-        echo "<th>Cost</th>";
-        echo "<th>Active Advert</th>";
-        echo "<th>Available</th>";
+    	echo "<table><tr>";
+        echo "<th>Advert</th>";
+        echo "<th>Quantity</th>";
+        echo "<th>Credits</th>";
+        echo "<th>Active</th>";
+        echo "<th>Live</th>";
         echo "</tr>";
     	foreach ($items as $item){
 	        echo "<tr>";
-	        echo "<td><a href='index.php?page=advert&id=" . $item['id'] . "'>" . $item['id'] . "</a></td>";
-	        echo "<td><a href='index.php?page=userprofile&id=" . $item['userID'] . "'>User</a></td>";
-	        echo "<td>" . date('H:i:s d/M/Y', $item['timestamp']) . "</td>";
-	        echo "<td>" . $item['name'] . "</td>";
-	        echo "<td>" . substr($item['description'], 0, 20) . "... </td>";
+	        echo "<td><a href='index.php?page=item&view_item=" . $item['id'] . "'>" . $item['name']  . "</a></td>";
 	        echo "<td>" . $item['amount_available'] . "</td>";
 	        echo "<td>" . $item['credits'] . "</td>";
 	        echo "<td>" . (($item['active']==1)? "Yes": "No") . "</td>";
@@ -336,57 +279,79 @@
 	        echo "</tr>";
     	}
     	echo "</table>";
-	}else{
-	    echo "<h2>No items</h2>";
-	}
-    echo "<h1>My Credit Ledger</h1>";
-	
-	$transactions = $db->query("fh_ledger", null, "userID = '" . $uid . "'", false,  ["timestamp" => "DESC"]);
-	
-	if($transactions){
-		echo "<table cellspacing = '15'><tr>";
-		echo "<th>Transaction Type</th>";
-		echo "<th>Time and Date</th>";
-		echo "<th>Balance</th>";
-		echo "<th>Credit Change</th>";
-		echo "<th>Advert ID</th>";
-		echo "<th>User</td>";
-		echo "</tr>";
-		foreach($transactions as $transaction){
-    		echo "<tr>";
-    		echo "<td>";
-    		switch($transaction['TransactionType']){
-    		    case 0:
-    		        echo "Top Up";
-    		        break;
-    		    case 1:
-    		        echo "Item Borrowed";
-    		        break;
-    		    case 2:
-    		        echo "Item Loaned";
-    		        break;
-    		    case 3:
-    		        echo "Admin Adjustment";
-    		        break;
-    		} 
-    		
-    		echo "</td>";
-    		echo "<td>" . date('H:i:s d/M/Y',$transaction['timestamp']) . "</td>";
-    		echo "<td>" . $transaction['balance'] . "</td>";
-    		echo "<td>" . $transaction['changeCredit'] . "</td>";
-    		echo "<td>" . (($transaction['advertID']==-1) ? "None" : $transaction['advertID']) . "</td>";
-    		echo "<td>" . $transaction['userID'] . "</td>";
-    		echo "</tr>";
 
-		}
-        echo "</table>";
 	}else{
 	    echo "<h2>No items</h2>";
 	}
+
+    echo "</div>";
+    echo "<div id='items_loaned' class='column contactContainer'>";
+    echo "<h3 class='subheading'>Items Borrowed</h3>";
+
+    $items = $db->query("fh_items_loaned", null, "loanerID = '" . $uid . "'",  true, ["id" => "DESC"]);
+    if ($items){
+        echo "<table><tr>";
+        echo "<th>Item</th>";
+        echo "<th>Time/Date</th>";
+        echo "<th>Quantity</th>";
+        echo "<th>Cost</th>";
+        echo "<th></th>";
+        echo "</tr>";
+        
+        foreach ($items as $item){
+            $adData = $db->query("fh_adverts", ["credits", "name"], "id = '" . $item["itemID"] . "'");
+            echo "<tr>";
+            echo "<td>";
+            if (!$adData){
+                echo "Item deleted";
+            }else{
+                echo "<a href='?page=item&view_item=" . $item['itemID'] . "'>" . $adData[0]['name'] . "</a>";
+            }
+            echo "</td>";
+            echo "<td>";
+            echo date("H:i:s d/m/Y", $item['timestamp']);
+            echo "</td>";
+            echo "<td>";
+            echo $item['amount_loaned'];
+            echo "</td>";
+            echo "<td>";
+            if (!$adData){
+                echo "Item removed";
+            }else{
+                
+    			
+    			$credits = ($adData[0]["credits"] * $item["amount_loaned"]) * (((time() - $item["timestamp"]) / 86400));
+        	    $credits = intval($credits);
+        	    if ($credits == 0){$adData[0]["credits"] * $item["amount_loaned"];}
+        	    echo $credits;
+            }
+            echo "</td>";
+            echo "<td>";
+            echo '<form action="?page=account" method="post">';
+        	echo '<button type = "submit" name = "return_item" value = "' . $item["id"] . '" class = "btn">Return Item</button>';
+        	echo '</form>';
+            echo "</td>";
+            echo "</tr>";
+        }
+        echo "</table>";
+        			
+
+    }else{
+        echo "<h2>You do not have any borrowed items</h2>";
+    }
+    echo "</div>";    
+echo "</div>";    
+
 ?>
+
 <script src="<?php echo $js_dir . "luhn.js"; ?>"></script>
 
 <script>
+    const checks = {
+    "pwdMessage": true,
+    "dob": true
+    }
+    
     function luhn_check(){
         el = document.getElementById("luhnMessage");
         submitButton = document.getElementById("topup");
@@ -394,13 +359,53 @@
         
         val = validateCard(cardNo);
         if (val == false){
-            el.innerHTML = "Card Number is Invalid";
+            el.innerHTML = "&#10060;";
             submitButton.setAttribute("disabled","disabled");
-            el.style = "background: red; color: white;";
+            el.style = "color: red;";
         }else{
-            el.innerHTML = "Card Number is Valid";
+            el.innerHTML = "&nbsp;&#10004;";
             submitButton.removeAttribute("disabled");
-            el.style = "background: green; color: white;";
+            el.style = "color: green;";
         }
+    }
+
+    function passfailDisplay(elID, passFail){
+        submitButton = document.getElementById("updateAcc");
+        el = document.getElementById(elID);
+        if (passFail == true){
+            el.innerHTML = "&nbsp;&#10004;";
+            el.style = "color: green;";
+            if ((Object.keys(checks).every(name => checks[name]))){
+                submitButton.removeAttribute("disabled");
+            }
+        }else{
+            el.innerHTML = "&#10060;";
+            el.style = "color: red;";
+            submitButton.setAttribute("disabled","disabled");
+        }
+    }
+    function verifyFields(id1, id2, fieldSign){
+       el1 = document.getElementById(id1); 
+       el2 = document.getElementById(id2);
+       if (el1.value==el2.value){
+           match = true;
+       }else{
+           match = false;
+       }
+       checks[fieldSign] = match;
+       passfailDisplay(fieldSign, match);
+    }
+    
+    function ageVerification(el, fieldsSgn){
+        dateNow = new Date();
+        liveDate = Date.parse(dateNow);
+        dobOfUser = Date.parse(el.value);
+        if ((liveDate - dobOfUser) < 567648000000){
+            age = false;
+        }else{
+            age = true;
+        }
+        checks['dob'] = age;
+        passfailDisplay(fieldsSgn, age);
     }
 </script>
