@@ -49,37 +49,15 @@
 				$user = $db->getRow("fh_users", "id = '" . $uid . "'");						// Retrieve user details
 				if ($user){							// User should always be > 0 (Old code this can be removed at the next update)
 					$userAccessLevel = $user['priviledge_id'];									// get Priviledge ID
-					$accessCheck = $db->getRow("fh_priviledge_settings", "priviledge_id = '". $userAccessLevel . "'");
-					if (isset($_GET['page']) && is_array($accessCheck)){						// does the page exist in the accessCheck array
-						if (array_key_exists($_GET['page'], $accessCheck)){
-							// The page was found inside the accessCheck array (db results)
-							if ($_GET['page'] != "logout"){
-								// Make sure we are not on a logout page (as it will divert to unauthorised access otherwise
-								if ($accessCheck[$_GET['page']] == 1){
-								   //the page has a 1 value representing True, then allow the user to see the page
-									$visiting_page = $_GET['page'] . ".php";
-								}else{
-								   // The database has a 0 (or other integer) marked against it, deny viewing, divert to unauthorised access 
-								   $visiting_page = "unauthorised_access.php";
-								}
-							}else{
-								// page is logout.php, so we want to show it
-								$visiting_page = "logout.php";
-							}
-						}else{
-							// The user priviledge doesnt exist in the database (ie its been deleted or user details incorrectly edited
-							if ($_GET['page'] != "logout"){
-								// We are not on the logout page - so display 404 error (This should be updated to a "Technical fault" page
-								$visiting_page = "404.php";
-							}else{
-								// We are on the log out page, so lets show logout.php
-								$visiting_page = "logout.php";
-							}
-						
-						}
+					$permissions = $db->getRow("fh_priviledge_settings", "priviledge_id = '". $userAccessLevel . "'");
+					if (isset($_GET['page'])){
+                        if (is_null($_GET['page']) || $_GET['page'] == ""){
+	                        $visiting_page = "home_page.php";
+	                    }else{
+        					$visiting_page = $_GET['page'] . ".php";
+	                    }
 					}else{
-						// no data for this access check or page is
-						$visiting_page = "account.php";
+				        $visiting_page = "account.php";
 					}
 				}else{
 					// There is no user credentials, establish the page
@@ -135,5 +113,21 @@
     }else{
 		//all else fails load home page (logged out)
         $visiting_page = $home;
+    }
+    
+    function permission_check($page, $return = false){
+        // new page priviledge checks
+        if (isset($GLOBALS['permissions'])){
+            if ($return){
+                return $GLOBALS['permissions'][$page];
+            }
+            if ($GLOBALS['permissions'][$page]==0){
+                include('home_page.php');
+                die;
+            }
+        }else{
+            include('home_page.php');
+            die;
+        }
     }
 ?>
