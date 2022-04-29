@@ -1,7 +1,6 @@
 <?php
-	echo "<h1>Registration page</h1>";
-
-	echo "<br>";
+	echo "<h2>Registration page</h2>";
+	echo "<hr>";
 
     if (isset($_GET['linkverify'])){
         $verificationCode = $_GET['linkverify'];
@@ -90,92 +89,114 @@
 ?>
 <script src="<?php echo $js_dir . "luhn.js"; ?>"></script>
 <?php
-	echo '<form method="post" action="?page=register" name="submit_form" id="register_form" class="form">
+    echo "<div class='contactContainer'>";
+	echo '<form method="post" action="?page=register" name="submit_form" id="register_form" class="form">';
+    echo "<table><tr><td colspan=2>";
+    echo '<input type="text" id="username" name="username"' . (isset($_POST["username"])? ' value = "' . $_POST["username"] . '"' : "") . ' placeholder="Enter Username" required class="form_txtBox">';
+    echo "</td></tr><tr><td>";
+    echo '<input type="text" id="name" name="name"' . (isset($_POST["name"])? ' value = "' . $_POST["name"] . '"' : "") . ' placeholder="Enter Name" class="form_txtBox">';
+    echo "</td><td>";
+    echo '<input type="text" id="surname" name="surname"' . (isset($_POST["surname"])? ' value = "' . $_POST["surname"] . '"' : "") . ' placeholder="Enter Surname" class="form_txtBox">';
+    echo "</td></tr><tr><td>";
+    
+	echo '<input type="password" id="pwd" onchange="verifyFields(\'pwd\', \'pwd2\', \'pwdMessage\');" placeholder="Password" name="password"' . (isset($_POST["password"])? ' value = "' . $_POST["password"] . '"' : "") . ' class="form_txtBox">';
+	echo "</td><td>";
+	echo '<input type="password" id="pwd2" onchange="verifyFields(\'pwd\', \'pwd2\', \'pwdMessage\');" placeholder="Retype Password" class="form_txtBox">';
+	echo '<span id="pwdMessage"></span>';
 
-		<p class="form_p">Username:</p>
+	echo "</td></tr><tr><td>";
 
-		<input type="text" id="username" name="username"' . (isset($_POST["username"])? ' value = "' . $_POST["username"] . '"' : "") . ' placeholder="Enter Username" class="form_txtBox">
+    
+	echo '<input type="text" id="landline" name="phone1"' . (isset($_POST["phone1"])? ' value = "' . $_POST["phone1"] . '"' : "") . ' placeholder="Landline" class="form_txtBox">';
+	echo "</td><td>";
+	echo '<input type="text" id="mobile" name="phone2"' . (isset($_POST["phone2"])? ' value = "' . $_POST["phone2"] . '"' : "") . ' placeholder="Mobile" class="form_txtBox">';
+    echo "</td></tr><tr><td>";
+    echo '<input type="email" id="email" onchange="verifyFields(\'email\', \'email2\', \'emailMessage\');" name="email"' . (isset($_POST["email"])? ' value = "' . $_POST["email"] . '"' : "") . ' placeholder="Enter Email" class="form_txtBox">';
+    echo "</td><td>";
+    echo '<input type="email" id="email2" onchange="verifyFields(\'email\', \'email2\', \'emailMessage\');" placeholder="Verify Email" class="form_txtBox">';
+	echo '<span id="emailMessage"></span>';
+    echo "</td></tr><tr><td colspan=2>";
+    echo '<input type="text" id="FLineAdd" name="address_line1"' . (isset($_POST["address_line1"])? ' value = "' . $_POST["address_line1"] . '"' : "") . ' placeholder="House Number" class="form_txtBox">';
+    echo "</td></tr><tr><td colspan=2>";
+    echo '<input type="text" id="SLineAdd" name="address_line2"' . (isset($_POST["address_line2"])? ' value = "' . $_POST["address_line2"] . '"' : "") . ' placeholder="Street" class="form_txtBox">';
+    echo "</td><tr><tr><td colspan=2>";
+    echo '<input type="text" id="TLineAddr" name="address_line3"' . (isset($_POST["address_line3"])? ' value = "' . $_POST["address_line3"] . '"' : "") . ' placeholder="Town or City" required class="form_txtBox">';
+    echo "</td></tr><tr><td colspan=2>";
+	echo '<input type="text" id="country" name="country"' . (isset($_POST["country"])? ' value = "' . $_POST["country"] . '"' : "") . ' placeholder="Country" class="form_txtBox">';
+	echo "</td></tr><tr><td colspan=2>";
+	echo '<input type="text" id="pcode" name="postcode"' . (isset($_POST["postcode"])? ' value = "' . $_POST["postcode"] . '"' : "") . ' placeholder="Enter Post Code" class="form_txtBox" max=9>';
+	echo "</td></tr><tr><td>";
+	echo '<input type="number" id="cardnumber" name="cardnumber" placeholder="credit card" class="form_txtBox" onblur="luhn_check()">';
+	echo '<span id="luhnMessage"></span>';
+	echo "</td><td>";
+    echo '<input type="date" id="dob" name="dob"' . (isset($_POST["dob"])? ' value="' . $_POST["dob"] . '"' : '') . ' placeholder="Enter Date of Birth" class="form_txtBox" onblur="ageVerification(this, \'dobSign\');">';
+    echo '<span id="dobSign"></span>';
+	echo "</td></tr>";
+	echo "</table>";
+	echo '<p class="form_p">I agree to <a href="tandc.php" target="_blank">Terms and Conditions</a> <input type="checkbox" id="termsConditions" required></p>';
+    echo '
+		<input type="submit"  class="btn" name="register" class="form_button" id="reg_button" disabled value="Click here to register">
 
-		<p class="form_p">Name:</p>
+		<input type="reset"  class="btn" name="clear" class="form_button" id="clear_button" value="Restart your application form">
 
-		<input type="text" id="name" name="name"' . (isset($_POST["name"])? ' value = "' . $_POST["name"] . '"' : "") . ' placeholder="Enter Name" class="form_txtBox">
-
-		<p class="form_p">Surname:</p>
-
-		<input type="text" id="surname" name="surname"' . (isset($_POST["surname"])? ' value = "' . $_POST["surname"] . '"' : "") . ' placeholder="Enter Surname" class="form_txtBox">
-
-		<p class="form_p">Email:</p>
-
-		<input type="email" id="email" name="email"' . (isset($_POST["email"])? ' value = "' . $_POST["email"] . '"' : "") . ' placeholder="Enter Email" class="form_txtBox">
-
-		<p class="form_p">Date of Birth:</p>
-
-		<input type="date" id="dob" name="dob"' . (isset($_POST["dob"])? ' value = "' . $_POST["dob"] . '"' : "") . ' placeholder="Enter Date of Birth" class="form_txtBox">
-
-		<p class="form_p">Address Line 1:</p>
-
-		<input type="text" id="FLineAdd" name="address_line1"' . (isset($_POST["address_line1"])? ' value = "' . $_POST["address_line1"] . '"' : "") . ' placeholder="First Line of Address" class="form_txtBox">
-
-		<p class="form_p">Address Line 2:</p>
-
-		<input type="text" id="SLineAdd" name="address_line2"' . (isset($_POST["address_line2"])? ' value = "' . $_POST["address_line2"] . '"' : "") . ' placeholder="Second line of address" class="form_txtBox">
-
-		<p class="form_p">Address Line 3:</p>
-
-		<input type="text" id="TLineAddr" name="address_line3"' . (isset($_POST["address_line3"])? ' value = "' . $_POST["address_line3"] . '"' : "") . ' placeholder="Third line of address" class="form_txtBox">
-
-		<p class="form_p">Country:</p>
-
-		<input type="text" id="country" name="country"' . (isset($_POST["country"])? ' value = "' . $_POST["country"] . '"' : "") . ' placeholder="Enter Country" class="form_txtBox">
-
-		<p class="form_p">Post Code:</p>
-
-		<input type="text" id="pcode" name="postcode"' . (isset($_POST["postcode"])? ' value = "' . $_POST["postcode"] . '"' : "") . ' placeholder="Enter Post Code" class="form_txtBox" max=9>
-
-		<p class="form_p">Phone:</p>
-
-		<input type="text" id="landline" name="phone1"' . (isset($_POST["phone1"])? ' value = "' . $_POST["phone1"] . '"' : "") . ' placeholder="Landline" class="form_txtBox">
-
-		<p class="form_p">Phone:</p>
-
-		<input type="text" id="mobile" name="phone2"' . (isset($_POST["phone2"])? ' value = "' . $_POST["phone2"] . '"' : "") . ' placeholder="Mobile" class="form_txtBox">	
-
-        <p class="form_p">Debit/Credit Card (Age Verification):</p>
-        <input type="verify" id="cardnumber" name="cardnumber" class="form_txtBox" onblur="luhn_check()">
-        <span id="luhnMessage">
-        </span>
-		<p class="form_p">Password:</p>
-		<input type="password" id="username" name="password"' . (isset($_POST["password"])? ' value = "' . $_POST["password"] . '"' : "") . ' class="form_txtBox">
-
-		<p class="form_p">Re-Type Password:</p>' .
-
-		//<input type="password" id="username" name="retypedpassword"  class="form_txtBox">
-
-		'<br>
-		<p class="form_p">I agree to <a href="#">Terms and Conditions</a></p>
-		<input type="checkbox" id="termsConditions" required>
-
-		<input type="submit" name="register" class="form_button" id="reg_button" disabled value="Click here to register">
-
-		<input type="reset" name="clear" class="form_button" id="clear_button" value="Restart your application form">
-
-	</form>'
+	</form>';
+	echo "</div>";
 ?>
 <script>
+    const checks = {
+    "luhnMessage": false,
+    "emailMessage": false,
+    "pwdMessage": false,
+    "dob": false
+    }
     function luhn_check(){
-        el = document.getElementById("luhnMessage");
-        submitButton = document.getElementById("reg_button");
         cardNo = document.getElementById("cardnumber").value;
-        
         val = validateCard(cardNo);
         if (val == false){
-            el.innerHTML = "Age verification failed";
-            submitButton.setAttribute("disabled","disabled");
-            el.style = "background: red; color: white;";
+            cc = false;
         }else{
-            el.innerHTML = "Age verification passed";
-            submitButton.removeAttribute("disabled");
-            el.style = "background: green; color: white;";
+            cc = true;
         }
+        checks['luhnMessage'] = cc;
+        passfailDisplay("luhnMessage", cc);
+    }
+    function passfailDisplay(elID, passFail){
+        submitButton = document.getElementById("reg_button");
+        el = document.getElementById(elID);
+        if (passFail == true){
+            el.innerHTML = "&nbsp;&#10004;";
+            el.style = "color: green;";
+            if ((Object.keys(checks).every(name => checks[name]))){
+                submitButton.removeAttribute("disabled");
+            }
+        }else{
+            el.innerHTML = "&#10060;";
+            el.style = "color: red;";
+            submitButton.setAttribute("disabled","disabled");
+        }
+    }
+    function verifyFields(id1, id2, fieldSign){
+       el1 = document.getElementById(id1); 
+       el2 = document.getElementById(id2);
+       if (el1.value==el2.value){
+           match = true;
+       }else{
+           match = false;
+       }
+       checks[fieldSign] = match;
+       passfailDisplay(fieldSign, match);
+    }
+    
+    function ageVerification(el, fieldsSgn){
+        dateNow = new Date();
+        liveDate = Date.parse(dateNow);
+        dobOfUser = Date.parse(el.value);
+        if ((liveDate - dobOfUser) < 567648000000){
+            age = false;
+        }else{
+            age = true;
+        }
+        checks['dob'] = age;
+        passfailDisplay(fieldsSgn, age);
     }
 </script>
