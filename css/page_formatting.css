@@ -1,328 +1,267 @@
-/****************
+body{
+    margin:0;
+    background: #EDE7DE;
+}
+td.divider{
+    border-left: 1px solid gray;
+    padding: 20px;
+    margin: 14px;
+    width: 60%;
+}
+.nobullets{
+    list-style: none;
+}
+#adPreviewWindow{
+    max-width: 60%;
+}
+.contactContainer {
+    background: #FEF8FF;
+    border-radius: 30px;
+    padding: 10px;
+    color: black;
+    min-height: 300px;
+    border: 1px solid gray;
+    margin: 5px;
+    min-width: 360px;
+    overflow: hidden;
+}
 
-*** DEFAULTS
+header{
+    border-bottom: 3px solid #C2C2C3;
+    background: white;
+    position: fixed;
+    width: 100%;
+    z-index: 99;
+}
+main{
+    position: relative;
+    font-family: arial;
+    padding: 5px;
+    padding-bottom: 160px;
+    min-height: 760px;
+    padding-top: 100px; 
+}
+.column {
+    float: left;
+    padding-right: 30px;
 
-*****************/
+}
+.carusellBtn{
+    border-radius: 50%;
+    border-style: none;
+    color: white;
+    background: green;
+    margin-left: 10px;
+    height: 60px;
+    width: 60px;
+    font-size: 2em;    
+}
+.textarea{
+    height: 14em;
+    width: 28em;
+}
+td.mailbox {
+    background: white;
+    border-left: 1px solid gray;
+    padding-left: 10px;
+}
+table.tableMailbox{
+    width: 100%;
+}
+th{
+    color: #057706;
+    font-weight: bold;
+}
+.adImageCell{
+    vertical-align: top;
+}
+input[type='text'], input[type='password'],  input[type='number'], input[type='email'],input[type='date'],textarea{
+background: white;
+    border: 2px solid #CBCAC9;
+    border-radius: 15px;
+    padding-left: 1em;
+    height: 2em;
+}
+.advert_image{
+ height: 300px;  
+ border-radius: 10px 65px 10px 65px;
+}
+div#searchBar {
+    position: absolute;
+    top: 2em;
+    left: 32em;
+}
+td.topalign {
+    vertical-align: top;
+}
+td.homePageAdverts {
+    height: 200px;
+    vertical-align: top;
+}
 
-* { margin: 0px; padding: 0px; }
+h1, h2, h3, h4{
+    color: #057706;
+    
+}
+.carusellBtnEnclosure {
+    position: relative;
+    margin-left: 15px;
+    margin-right: 15px;    
+}
+div#carrusell {
+    overflow: hidden;
+    width: calc(100% - 40px);
+    background-color: rgba(5, 109, 6, 0.3);
+    padding: 10px;
+    margin: 10px;
+    border-radius: 30px 0 30px 0;
+}
+img.menu_logo {
+    width: 310px;
+}
 
+img.advert_image_small{
+    width: 233px;
+}
 
+#menu li a{
+    text-decoration: none;
+    background: #649849;
+    color: white;
+    font-family: arial;
+    height: 2em;
+    display: inline-block;
+    line-height: 2em;
+    padding: 0px 16px 0px 16px;
+    margin: 2px;
+    border-radius: 18px;
+    position: relative;
+    top: 7px;
+}
 
-html { height: 100%; box-sizing: border-box; }
+ul#menu {
+    display: inline-block;
+    text-align: right;
+    position: absolute;
+    right: 1em;
+    top: 0.5em;
+}
+.banner{
+    height: 15em;
+}
+.login_div{
+    float: right;
+}
+.welcome_msg{
+    float: left;
+}
+.navbar li {
+    list-style: none;
+    float: left;
+}
 
-.uidBar {
-    line-height: 1.5em;
-    font-size: 1em;
-    letter-spacing: 6pt;
+footer{
+    position:absolute;
+    bottom: 0;
+    
+}
+
+footer table td{
+    vertical-align: top;
+}
+
+#signup {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #649849;
+}
+
+table.advertTable {
+    align-content: center;
+    /* width: 75%; */
+    /* text-align: center; */
+    padding: 0 25%;
+}
+
+.btn {
+    text-decoration: none;
+    background: #057706;
+    color: white;
+    font-family: arial;
+    height: 2.5em;
+    display: inline-block;
+    line-height: 2.5;
+    padding: 0px 16px 0px 16px;
+    margin: 2px;
+    border-radius: 12px;
+    border-style: none;
+    min-width: 10em;
+}
+.btn:disabled{
+    background: #C2C2C3;
+}
+
+#loginForm input {
+    border: 1px solid grey;
+    border-radius: 12px;
+    padding: 5px;
+    margin: 10px;
+    width: 25em;
+}
+
+#loginForm {
+    text-align: center;
+    padding: 10px;
+    right: 3em;
+    position: relative;
+    top: 4em;
+}
+.content{
+    text-align: center;
 }
 .icon{
     height: 32px;
-    width: 32px;
 }
-
-
-body {
-
-  position: relative;
-
-  margin: 0;
-
-  padding-bottom: 6rem;
-
-  min-height: 100%;
-
-}
-
-/* HEADINGS DEFAULT */
-
-h1, h2, h3, h4, h5, h6 { color: #444; font-family: 'Averia Serif Libre', cursive; }
-
-a { text-decoration: none; }
-
-ul, ol { margin-left: 40px; }
-
-hr { margin: 10px 0px; opacity: .25; }
-
-
-
-/* FORM DEFAULTS */
-.login_div input{
-	width: 100%;
-
-}
-form h2 {
-
-	margin: 25px auto;
-
-	text-align: center;
-
-	font-family: 'Averia Serif Libre', cursive;
-
-}
-
-form input, form textarea {
-
-	display: block;
-
-	padding: 13px 13px;
-
-	font-size: 1em;
-
-	margin: 5px auto 10px;
-
-	border-radius: 20px;
-	background: white;
-	box-sizing : border-box;
-	border: 1px solid #3E606F;
-
-}
-form textarea{
-    height: 20em;
-    width: 40em;
-}
-
-form input:focus {
-
-	outline: none;
-
-}
-
-/* BUTTON DEFAULT */
-
-.btn {
-
-	color: white;
-
-	background: #4E6166;
-
-	text-align: center;
-
-	border: none;
-
-	border-radius: 5px;
-
-	display: block;
-
-	letter-spacing: .1em;
-
-	margin: 10px 0px;
-
-	padding: 13px 20px;
-
-	text-decoration: none;
-
-}
-
-.container {
-
-	width: 80%;
-
-	margin: 0px auto;
-
-}
-
-/* NAVBAR */
-
-.navbar {
-	margin: 0 auto;
-    overflow: hidden;
-    background-color: #444;
-    font-family: ariel;
-    border-bottom: 3px solid #A0A0A0;
-}
-
-.navbar ul {
-
-    list-style-type: none;
-
+.uidBar {
+    position: relative;
     float: right;
-
+    top: 1.1em;
 }
 
-.navbar ul li {
-    float: left;
-    font-family: arial;
+.subheading{
+    border-bottom: 1px solid grey;
 }
 
-.navbar ul li a {
-
-    display: block;
-
-    color: white;
-
-    text-align: center;
-
-    padding: 21px 28px;
-
+.logoutBtn{
+    background: #DC1A24;
     text-decoration: none;
-
-}
-
-.navbar ul li a:hover {
-	color: #FFF;
-    background-color: #A0A0A0;
-}
-
-
-
-/* LOGO */
-
-.navbar .logo_div {
-
-	float: left; 
-
-	padding-top: 5px;
-
-	padding-left: 40px;
-
-}
-
-.navbar .logo_div h1 {
     color: white;
-    font-size: 3em;
-    letter-spacing: 10px;
-    font-weight: bolder;
     font-family: arial;
+    height: 1.5em;
+    display: inline-block;
+    line-height: 1.5;
+    padding: 0px 16px 0px 16px;
+    margin: 2px;
+    border-radius: 18px;
 }
-
-
-
-/* FOOTER */
-
-.footer {
-    position: absolute;
-    right: 0;
+footer{
+position: fixed;
     bottom: 0;
-    left: 0;
-    color: #333;
-    background-color: #A0A0A0;
-    text-align: center;
     width: 100%;
-    margin: 20px auto 0px;
-    /* padding: 0; */
-	font-size: 10pt;
-    line-height: 2em;
     font-family: arial;
-    height: 2em;
+    background: white;
+    color: #057706;
+    border-top: 3px solid #C2C2C3;
 }
-
-
-/*BANNER IMAGE */
-
-/* BANNER: Welcome message; */
-
-.banner {
-
-	min-height: 400px;
-	color: white;
-    background-image: url('../img/parcel.jpg');   
-	background-size: 100%;
-
+#carusellRightBtn {
+    position: absolute;
+    top: calc(50% - 15px);
+    right: 0;
+    margin-right: -15px;
 }
-
-.banner .welcome_msg {
-
-	width: 45%;
-
-	float: left;
-
-	padding: 20px;
-
-}
-
-.banner .welcome_msg h1 {
-
-	color: #4E6166;
-
-	margin: 25px 0px;
-
-	font-size: 2.4em;
-
-	font-family: 'Averia Serif Libre', cursive;
-
-}
-
-.banner .welcome_msg p {
-
-	color: #4E6166;
-
-	font-size: 1.75em;
-
-	line-height: 1.8em;
-
-    font-family: 'Noto Serif', serif;
-
-}
-
-.banner .welcome_msg p span {
-
-	font-size: .81em; 
-
-	color: #3E606F;
-
-}
-
-.banner .welcome_msg a {
-
-	width: 30%;
-
-	margin: 20px 0px;
-    font-size: 10pt;
-	padding: 12px 15px;
-	text-decoration: none;
-
-}
-
-.banner .welcome_msg a:hover {
-
-	background: #374447;
-
-}
-
-
-
-/* BANNER: Login Form; */
-
-.banner .login_div {
-
-	width: 50%;
-
-	float: left;
-
-}
-
-.banner .login_div form {
-
-	margin-top: 40px;
-
-}
-
-.banner .login_div form h2 {
-
-	color: #4E6166;
-
-	margin-bottom: 20px;
-
-    font-family: 'Noto Serif', serif;
-
-}
-
-.banner .login_div form input[button] {
-
-	width: 60%;
-	color: white;
-	border: 1px solid white;
-	margin: 10px auto;
-	letter-spacing: 1.3px;
-    font-family: 'Noto Serif', serif;
-}
-
-.banner .login_div form button {
-
-	display: block;
-
-	background: #4E6166;
-
-	margin-left: 20%;
-
+#carusellLeftBtn {
+    position: absolute;
+    top: calc(50% - 15px);
+    left: 0;
+    margin-left: -15px;
 }
