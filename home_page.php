@@ -16,7 +16,7 @@
     		    login($encryption, $db, $user_data);
     		}
     	}else{
-	    	echo "<h1>No account associated with these login credentials, please use the register button</h1>";
+	    	echo "<h1>No account associated with these login credentials, please use the sign up button</h1>";
 	    }
 	}
     loginForm();
@@ -31,7 +31,11 @@
 			$encryption->setPlainText(trim($salted_key));
 			$code = $encryption->classRun();
 			setcookie($GLOBALS['session_code'],$code , $GLOBALS['cookie_time']);
-			header ("location:?page=account");
+			if (isset($_GET['page'])){
+    			header ("location:?page=" . $_GET['page']);
+			}else{
+    			header ("location:?page=account");
+			}
 			die();
 		}else{
 			
@@ -49,17 +53,12 @@
         // logged out show login form
         echo "<div class=\"banner\">";
         echo "<div class=\"welcome_msg\">";
-        echo "<h1>Make use of your junk with Frack Hub</h1>";
-        echo "<p>Use And Submit Your Items And<br>Gain Credit! <br></p><br>"; 
-        echo "<span>👩‍🦳👩‍🍳🧑👨‍🔧</span>";
-        echo "</p>";
-        echo "<a href=\"index.php?page=register\" class=\"btn\">Sign Up</a>";
+        echo "<h2>Make use of your junk with Frack Hub</h2>";
         echo "</div>";
         echo ("<div class=\"login_div\">");
-		echo ("<form action=\"" . $_SERVER['PHP_SELF'] . "\" method=\"post\" >");        
-		echo ("<h2>Login</h2>");        
-		echo ("<input type=\"text\" name=\"username\" placeholder=\"Username\">");        
-	    echo ("<input type=\"password\" name=\"password\"  placeholder=\"Password\">");         
+		echo ("<form action=\"" . $_SERVER['PHP_SELF'] . "\" method=\"post\" id='loginForm'>");        
+		echo ("<input type=\"text\" name=\"username\" placeholder=\"Username\"><br>");        
+	    echo ("<input type=\"password\" name=\"password\"  placeholder=\"Password\"><br>");         
 		echo ("<button class=\"btn\" type=\"submit\" name=\"login_btn\">Sign in</button>");        
 		echo ("</form>");
         echo ("</div>");
@@ -67,14 +66,35 @@
         //<!-- Page content -->
         echo "<div class=\"content\">";
 
-        echo "<h2 class=\"content-title\">Recent Items Submitted:</h2>";
+        echo "<h2 class=\"content-title\">Recent Items Submitted</h2>";
         echo ("<hr>");
-    	$results = $GLOBALS['db']->query("fh_adverts", NULL, NULL, true, ["id"=>"DESC"], $GLOBALS['homepage_adverts']);
+    	$results = $GLOBALS['db']->query("fh_adverts", NULL, "active='1' AND available > 0", true, ["id"=>"DESC"], $GLOBALS['homepage_adverts']);
+        echo "<div class='carusellBtnEnclosure'>";
+        echo "<button class='carusellBtn' id='carusellLeftBtn' onclick=\"carusell('carrusell', 'right', 233);\">&lt;</button>";
+        echo "<div class='carrusell' id='carrusell'>";
+        echo "<table><tr>";
         foreach ($results as $result){
-            echo "<li><a href='index.php?page=item&view_item=" . $result['id'] . "'>" . $result['name'] . "</a>";
-            echo "<li>" . $result['description'];
-            echo "<hr>";
+            echo "<td class='topalign'><table><tr><td class='homePageAdverts'>";
+            $img = $GLOBALS['db']->getRow("fh_advert_images", "advert_id=" . $result['id']);
+            if (isset($img['file_name'])){
+                if ($img['file_name']){
+                    echo "<img src='advert_images/" . $img['file_name'] . "' alt='frackhub image' class='advert_image_small'>";
+                }
+            }else{
+                echo "<img src='img/noimage.jpg' alt='frackhub image' class='advert_image_small'>"; 
+            }
+            echo "</td></tr><tr><td>";
+            echo "<h3><a href='index.php?page=item&view_item=" . $result['id'] . "'>" . $result['name'] . "</a></h3>";
+            echo "</td></tr><tr><td>";
+            echo  $result['description'];
+            echo "</td></tr></table>";
+            echo "</td>";
+            
         }
+        echo "</tr></table>";
+        echo "</div>";
+        echo "<button class='carusellBtn' id='carusellRightBtn' onclick=\"carusell('carrusell', 'left', 233);\">&gt;</button>";
+        echo "</div>";
         echo "</div>";
         
         //<!-- // Page content -->
@@ -82,3 +102,25 @@
     }
     
 ?>
+<script>
+    let carusellPosition = 0;
+    function carusell(id, direction, amt){
+        let el = document.getElementById(id);
+        let max = el.offsetWidth;
+        if (direction == "left"){
+            if ((carusellPosition + amt) > max){
+                carusellPosition = max;
+            }else{
+                carusellPosition+=amt
+            }
+        }else{
+            if ((carusellPosition - amt) < 0){
+                carusellPosition = 0;
+            }else{
+                carusellPosition-=amt
+            }
+        }
+        el.scrollTo({left: carusellPosition, behaviour: 'smooth'});
+
+    }
+</script>
