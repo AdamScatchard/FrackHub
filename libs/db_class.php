@@ -106,6 +106,10 @@ class db{
 		$arr['description'] = $activity;
 		$arr['userID'] = $userID;
 		$arr['page'] = $_SERVER["SCRIPT_NAME"] . "?" . http_build_query($_GET, "", "&amp;");
+		$arr['ip_address'] = $_SERVER['REMOTE_ADDR'];
+		if (isset($_SERVER['HTTP_REFERER'])){
+    		$arr['domain'] = $_SERVER['HTTP_REFERER'];
+		}
 		$arr['error'] = 0;
 		$arr['read_entry'] = 0;
 		$arr['timestamp'] = time();
@@ -169,7 +173,7 @@ class db{
 		// a where clause provided. Returning a true/false for success/failure
 		if ($GLOBALS['conn']){
 			if (is_null($whereCondition) && ($safeguard == false)){
-				if ($GLABALS['debug']){
+				if ($GLOBALS['debug']){
 					echo ("<li>Missing where clause or confirmation not declared");
 				}
 				return false;
