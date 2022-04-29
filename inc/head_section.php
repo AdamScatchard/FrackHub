@@ -38,4 +38,4 @@
 	}
 	echo "</head>";
 	echo "<body>";
-?>
+?>	
