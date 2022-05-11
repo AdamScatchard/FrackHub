@@ -22,10 +22,12 @@
 		getRow was introduced to return a single entry, this is more relevant for username checks or retrieving an advert rather than a cluster of adverts
 	Version 1.4
 		activitylog this version saw the introduction of activity logging 
+	Version 1.5
+	    Removed methods not developed in full or completed.
 */
 $conn;
-if (isset($_GET['debug'])){
-    $debug_url = $_GET['debug'];
+if (isset($_GLOBALS['debug'])){
+    $debug_url = $GLOBALS['debug'];
 }else{
     $debug_url = false;
 }
@@ -43,7 +45,7 @@ class db{
 	}
 	function about(){
 		return array(
-			"version:"=>"1.4", 
+			"version:"=>"1.5", 
 			"developer"=>"A.Mackay", 
 			"student"=>"2000418", 
 			"copyright"=>"&copy;2022 all rights reserved", 
@@ -113,14 +115,10 @@ class db{
 		$arr['error'] = 0;
 		$arr['read_entry'] = 0;
 		$arr['timestamp'] = time();
+		
 		$this->insert("activity", $arr, false);
 		
 		// records an action on the website performed by the user (data overload mind)
-	}
-	private function errorLog($errno, $errstr, $errfile, $errline){		// store any error trigger to save the error in the database.
-		$values = array(""=>"", ""=>"", ""=>"", ""=>"");
-		//echo "Error " . $errno;
-		return $this->insert("errors", $values);
 	}
 
 	function insert($table, $cell_and_values, $do_log=true){
@@ -167,6 +165,8 @@ class db{
 	}
 
 	function update($table, $values, $whereCondition = NULL, $safeguard = False){
+        // Update this code to be secure against SQL Injection
+
 
 		// replaces existing data within the database with new values provided.
 		// the method contains the failsafe, (boolean variable) where there has not been
@@ -209,7 +209,9 @@ class db{
 		}
 	}
 	function getRow($table, $where){
-		// expand on this in the future.
+		// Work Required:
+		    // Table, Columns (as array), Where (as associated Array), No Safeguard
+		    
 		$sql = "SELECT * FROM " . $table . " WHERE " . $where;
 		if (isset($_GET['debug'])){
 		    if ($_GET['debug'] == "true"){
@@ -326,7 +328,15 @@ class db{
 			}
 		}	
 	}
+	
+	function cleanSQLInjection($string){
+	   // strips out single quotes, double quotes, and apostrophes and semi colons
+	   // and replaces them with HTML entities, meaning the user sees what they typed in
+    	    $string = str_replace(";", "&#59;", $string);     // semi-colons
+    	    $string = str_replace("'", "&#39;", $string);       // apostrophe
+    	    $string = str_replace("`", "&lsquo;", $string);     // single quote
+    	    $string = str_replace("\"", "&quot;", $string);     // double quote
+	    return $string;
+	}
 }
-//$old_error_handler = set_error_handler("errorLog");
-
 ?>
