@@ -1,22 +1,22 @@
 <?php
 	if (isset($_POST['login_btn'])){
 		// login button clicked
-		$results = $db->query("fh_users", ["id", "username", "password", "email", "timestamp"], "username = '" . $_POST['username'] . "'", True, NULL);
-		$user_data = $db->getRow("fh_users", "username='" . $_POST['username'] . "' and active='1'");
+		$results = $db->query("fh_users", ["id", "username", "password", "email", "timestamp"], "username = '" . $db->cleanSQLInjection($_POST['username']) . "' AND banned=0", True, NULL);
+		$user_data = $db->getRow("fh_users", "username='" . $db->cleanSQLInjection($_POST['username']) . "' and active='1'");
     	if ($user_data){
     		if ($user_data['attempts'] == 3){
     		    // 3 attempts check for the time
     			if ((time() - $user_data['lastlogin_timestamp']) > $temporary_lock_time){
     			    login($encryption, $db, $user_data);
     			}else{
-    			    echo "<h1>This acccount is temporarely locked</h1>";
+    			    echo "<h1 class='loginMsg'>This acccount is temporarily locked</h1>";
     			}
 
     		}else{
     		    login($encryption, $db, $user_data);
     		}
     	}else{
-	    	echo "<h1>No account associated with these login credentials, please use the sign up button</h1>";
+	    	echo "<h1 class='loginMsg'>No account associated with these login credentials, please use the sign up button</h1>";
 	    }
 	}
     loginForm();
@@ -41,9 +41,9 @@
 			
     		$attempts = $user_data['attempts'];
     			if ($attempts >= 3){
-    				echo "<h2>Your account is temporarely locked</h2>";
+    				echo "<h2 class='loginMsg'>Your account is temporarily locked</h2>";
     			}else{
-    				echo "<h2>You have " . 3 - $attempts . " remaining, you entered the wrong login details</h2>";
+    				echo "<h2 class='loginMsg'>You have " . 3 - $attempts . " remaining, you have entered the wrong login details</h2>";
     				$db->update("fh_users", ["attempts" => $attempts + 1, "lastlogin_timestamp"=> time()], "id=" . $user_data['id']);
     			}
 		}
@@ -53,13 +53,13 @@
         // logged out show login form
         echo "<div class=\"banner\">";
         echo "<div class=\"welcome_msg\">";
-        echo "<h2>Make use of your junk with Frack Hub</h2>";
+        echo "<h2>Welcome to FrackHub!</h2><br><h4>We are a non-profit, community driven service that allows users to post &amp; borrow different items in exchange for credits.</h4><br><h3>Membership is free, sign up below and begin your FrackHub journey!</h3>";
         echo "</div>";
         echo ("<div class=\"login_div\">");
 		echo ("<form action=\"" . $_SERVER['PHP_SELF'] . "\" method=\"post\" id='loginForm'>");        
-		echo ("<input type=\"text\" name=\"username\" placeholder=\"Username\"><br>");        
-	    echo ("<input type=\"password\" name=\"password\"  placeholder=\"Password\"><br>");         
-		echo ("<button class=\"btn\" type=\"submit\" name=\"login_btn\">Sign in</button>");        
+		echo ("<input type=\"text\" name=\"username\" placeholder=\"Username\" required><br>");        
+	    echo ("<input type=\"password\" name=\"password\"  placeholder=\"Password\" required><br>");         
+		echo ("<button class=\"btn\" type=\"submit\" name=\"login_btn\">Sign in</button>"); 
 		echo ("</form>");
         echo ("</div>");
         echo ("</div>");
@@ -70,12 +70,12 @@
         echo ("<hr>");
     	$results = $GLOBALS['db']->query("fh_adverts", NULL, "active='1' AND available > 0", true, ["id"=>"DESC"], $GLOBALS['homepage_adverts']);
         echo "<div class='carusellBtnEnclosure'>";
-        echo "<button class='carusellBtn' id='carusellLeftBtn' onclick=\"carusell('carrusell', 'right', 233);\">&lt;</button>";
+        echo "<button class='carusellBtn' id='carusellLeftBtn' onclick=\"carusell('carrusell', 'right');\">&lt;</button>";
         echo "<div class='carrusell' id='carrusell'>";
         echo "<table><tr>";
         foreach ($results as $result){
             echo "<td class='topalign'><table><tr><td class='homePageAdverts'>";
-            $img = $GLOBALS['db']->getRow("fh_advert_images", "advert_id=" . $result['id']);
+            $img = $GLOBALS['db']->getRow("fh_advert_images", "advert_id=" . $result['id'] . " AND active='1'");
             if (isset($img['file_name'])){
                 if ($img['file_name']){
                     echo "<img src='advert_images/" . $img['file_name'] . "' alt='frackhub image' class='advert_image_small'>";
@@ -93,7 +93,7 @@
         }
         echo "</tr></table>";
         echo "</div>";
-        echo "<button class='carusellBtn' id='carusellRightBtn' onclick=\"carusell('carrusell', 'left', 233);\">&gt;</button>";
+        echo "<button class='carusellBtn' id='carusellRightBtn' onclick=\"carusell('carrusell', 'left');\">&gt;</button>";
         echo "</div>";
         echo "</div>";
         
@@ -104,9 +104,11 @@
 ?>
 <script>
     let carusellPosition = 0;
-    function carusell(id, direction, amt){
+    function carusell(id, direction){
+        
         let el = document.getElementById(id);
-        let max = el.offsetWidth;
+        let amt = el.offsetWidth;
+        let max = (el.scrollWidth-el.offsetWidth);
         if (direction == "left"){
             if ((carusellPosition + amt) > max){
                 carusellPosition = max;
