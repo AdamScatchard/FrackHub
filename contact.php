@@ -2,6 +2,8 @@
     echo "<h2>Contact Us</h2>";
     echo "<hr>";
     echo "<div id='contactContainer' class='contactContainer'>";
+    echo "<h3>At Frackhub, we care about your experience</h3>";
+    echo "<p>Here is how you can get in touch...</p>";
     if (isset($_POST['sendBtn'])){
         foreach ($_POST as $key => $value){
             // switch (select) statement will allow us to code exceptions
@@ -12,7 +14,7 @@
                     break;
                 default:
                     // anything else should be saved
-                    $database_values[$key] = strip_tags($value);
+                    $database_values[$key] = $db->cleanSQLInjection(strip_tags($value));
             }
         }
         // Extras for administrative and security purposes
@@ -28,55 +30,29 @@
 
 
     function showform(){
+        echo "<div id='contactForm'>";
         echo "<form name='contactUsFrm' id='contactUsfrm' method='post' action='index.php?page=contact'>"; 
-        echo "<table>";
-        echo "<tr>";
-        echo "<td>";
         echo "<input type='text' name='name' placeholder='Name'>";
-        echo "</td>";
-        
-        echo "<td>";
-        echo "<input type='email' name='email' placeholder='E-Mail'>";
-        echo "</td>";
-        
-        echo "<td rowspan=3 class='divider'>";
-            echo "<h3>FrackHub<h3>";
-            echo "<hr>";
-            echo "Wolverhampton University<br>";
-            echo "Wulfruna Street<br>";
-            echo "Wolverhampton<br>";
-            echo "West Midlands<br>";
-            echo "England<br><br>";
-            echo "WV1 1LY<br><br>";
-            echo "<a href='Tel:01902555555'>01902 555 555</a>";
-            
-        echo "</td>";
-        
-        echo "</tr>";
-        echo "<tr>";
-        
-        echo "<td>";
+        echo "<input type='email' name='email' placeholder='E-Mail'><br>";
         echo "<input type='number' name='phone' placeholder='Phone Number'>";
-        echo "</td>";
-        
-        echo "<td>";
-        echo "<input type='text' name='subject' placeholder='Subject'>";
-        echo "</td>";
-        
-        echo "</tr>";
-
-        echo "<tr>";
-        echo "<td colspan=2>";
-        echo "<textarea class='textarea' name='message' placeholder='Your email contents'></textarea>";
-        echo "</td>";
-        echo "</tr>";
-        echo "<tr>";
-        echo "<td rowspan=3>";
+        echo "<input type='text' name='subject' placeholder='Subject'><br>";
+        echo "<textarea class='textarea' name='message' placeholder='Your email contents'></textarea><br>";
         echo "<input  class='btn' type=submit value='Send Email' name='sendBtn'>";
-        echo "</td>";
-        echo "</tr>";
-        echo "</table>";
         echo "</form>";
+        echo "</div>";
+
+        echo "<div id='contactAddress'>";
+        echo "<h3>FrackHub</h3>";
+        echo "<hr>";
+        echo "Wolverhampton University<br>";
+        echo "Wulfruna Street<br>";
+        echo "Wolverhampton<br>";
+        echo "West Midlands<br>";
+        echo "England<br><br>";
+        echo "WV1 1LY<br><br>";
+        echo "<a href='Tel:01902555555'>01902 555 555</a>";
+
+        echo "</div>";
     }
 
     function emailsaved(){
@@ -91,7 +67,7 @@
     }
     
     function emailfailed(){
-        echo "<h1>There was a problem sending your email</h1>";
+        echo "<h2>There was a problem sending your email</h2>";
         showform();
     }
 ?>
