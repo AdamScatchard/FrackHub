@@ -3,7 +3,7 @@
 	echo "<hr>";
 
     if (isset($_GET['linkverify'])){
-        $verificationCode = $_GET['linkverify'];
+        $verificationCode = $db->cleanSQLInjection($_GET['linkverify']);
         $user_data = $db->getRow("fh_users", "verification = '" .  $verificationCode . "' AND active = 0");
         if ($user_data){
             $done = $db->update("fh_users", ["active"=>1], "id=" . $user_data['id']);
@@ -24,7 +24,7 @@
 		// create database values to store in the database
 		$database_values['timestamp'] = time();				// timestamp of registration
 		$database_values['ip_address'] = $_SERVER['REMOTE_ADDR'];	// IP address 
-        $encryption->setPlainText($_POST["username"] . $_POST['email'] . $_POST['password'] . time() . strtotime($_POST['dob']));
+        $encryption->setPlainText($db->cleanSQLInjection($_POST["username"]) . $db->cleanSQLInjection($_POST['email']) . $db->cleanSQLInjection($_POST['password']) . time() . strtotime($db->cleanSQLInjection($_POST['dob'])));
         $database_values['verification'] = $encryption->classRun();
 		foreach ($_POST as $key => $value){
 			if ($key != "register"){
@@ -35,24 +35,23 @@
     				    }else{
         					$value = strtotime($value);
     				    }
-        				$database_values[$key] = $value;	
+        				$database_values[$key] = $db->cleanSQLInjection($value);	
 			            break;
 			        case "password":
-                        $encryption->setPlainText($value . $_POST["username"] . $_POST["email"] . $database_values['timestamp']);
+                        $encryption->setPlainText($value . $db->cleanSQLInjection($_POST["username"]) . $db->cleanSQLInjection($_POST["email"]) . $database_values['timestamp']);
                         $value = $encryption->classRun();
-        				$database_values[$key] = $value;	
+        				$database_values[$key] = $db->cleanSQLInjection($value);	
 			            break;
 			        case "cardnumber":
 			            include ($lib_dir . "luhn_checker.php");
-                        $cardCheck = checkLuhnCardNumber($_POST['cardnumber']);
+                        $cardCheck = checkLuhnCardNumber($db->cleanSQLInjection($_POST['cardnumber']));
                         if ($cardCheck == false){
                             echo "<h1>Failed Luhn Card Verification</h1>";
                             die();
                         }
                         break;
                     default:
-    				$database_values[$key] = $value;	
-
+    				    $database_values[$key] = $db->cleanSQLInjection($value);	
 			    }
 
 			}
@@ -89,55 +88,120 @@
 ?>
 <script src="<?php echo $js_dir . "luhn.js"; ?>"></script>
 <?php
+// comment out (table data)
     echo "<div class='contactContainer'>";
 	echo '<form method="post" action="?page=register" name="submit_form" id="register_form" class="form">';
-    echo "<table><tr><td colspan=2>";
+    echo "<br>";
+//    echo "<table><tr><td colspan=2>";
+
     echo '<input type="text" id="username" name="username"' . (isset($_POST["username"])? ' value = "' . $_POST["username"] . '"' : "") . ' placeholder="Enter Username" required class="form_txtBox">';
-    echo "</td></tr><tr><td>";
+    echo "<br>";
+
+//    echo "</td></tr><tr><td>";
     echo '<input type="text" id="name" name="name"' . (isset($_POST["name"])? ' value = "' . $_POST["name"] . '"' : "") . ' placeholder="Enter Name" class="form_txtBox">';
-    echo "</td><td>";
+//    echo "</td><td>";
+
     echo '<input type="text" id="surname" name="surname"' . (isset($_POST["surname"])? ' value = "' . $_POST["surname"] . '"' : "") . ' placeholder="Enter Surname" class="form_txtBox">';
-    echo "</td></tr><tr><td>";
-    
-	echo '<input type="password" id="pwd" onchange="verifyFields(\'pwd\', \'pwd2\', \'pwdMessage\');" placeholder="Password" name="password"' . (isset($_POST["password"])? ' value = "' . $_POST["password"] . '"' : "") . ' class="form_txtBox">';
-	echo "</td><td>";
-	echo '<input type="password" id="pwd2" onchange="verifyFields(\'pwd\', \'pwd2\', \'pwdMessage\');" placeholder="Retype Password" class="form_txtBox">';
+    echo "<br>";
+//    echo "</td></tr><tr><td>";
+    echo "Passwords must contain at least ";
+    if (isset($min_password)){
+    	echo  $min_password . " characters in length ";
+    }
+	if (isset($number_password)){
+	    echo "1 number ";
+	}
+	if (isset($lowercase_char_password) || isset($uppercase_char_password)){
+	    echo " a case difference and a special character";
+	}
+    echo "<br>";
+	echo '<input type="password" required id="pwd" onchange="verifyFields(\'pwd\', \'pwd2\', \'pwdMessage\');" placeholder="Password" name="password"' . (isset($_POST["password"])? ' value = "' . $_POST["password"] . '"' : "") . ' class="form_txtBox" ';
+    	if (isset($min_password)){
+    	    echo " minlength='" . $min_password . "'";
+    	}
+    $titleTxt = "";
+	echo ' pattern="';
+    	if (isset($number_password)){
+    	    echo "(?=.*\d)";
+    	    $titleTxt .= " a number,";
+    	}
+    	if (isset($lowercase_char_password)){
+    	    echo "(?=.*[a-z])";
+    	    $titleTxt .= " a upper case letter,";
+    	}
+    	if (isset($uppercase_char_password)){
+    	    echo "(?=.*[A-Z])";
+    	    $titleTxt .= " a lower case letter,";
+    	}
+    	if (isset($min_password)){
+    	    $titleTxt .= " and be at least " . $min_password . " characters long or more";
+        	echo ".{" . $min_password . ",}";
+    	}
+	echo '" title="Must contain at least ' . $titleTxt . '">';
+	
+//	echo "</td><td>";
+	echo '<input type="password" required id="pwd2" onchange="verifyFields(\'pwd\', \'pwd2\', \'pwdMessage\');" placeholder="Retype Password" class="form_txtBox FloatRight"';
+	if (isset($min_password)){
+	    echo " minlength='" . $min_password . "'";
+	}
+	echo ">";
+
 	echo '<span id="pwdMessage"></span>';
+    echo "<br>";
 
-	echo "</td></tr><tr><td>";
+//	echo "</td></tr><tr><td>";
 
-    
 	echo '<input type="text" id="landline" name="phone1"' . (isset($_POST["phone1"])? ' value = "' . $_POST["phone1"] . '"' : "") . ' placeholder="Landline" class="form_txtBox">';
-	echo "</td><td>";
+
+//	echo "</td><td>";
+
 	echo '<input type="text" id="mobile" name="phone2"' . (isset($_POST["phone2"])? ' value = "' . $_POST["phone2"] . '"' : "") . ' placeholder="Mobile" class="form_txtBox">';
-    echo "</td></tr><tr><td>";
-    echo '<input type="email" id="email" onchange="verifyFields(\'email\', \'email2\', \'emailMessage\');" name="email"' . (isset($_POST["email"])? ' value = "' . $_POST["email"] . '"' : "") . ' placeholder="Enter Email" class="form_txtBox">';
-    echo "</td><td>";
-    echo '<input type="email" id="email2" onchange="verifyFields(\'email\', \'email2\', \'emailMessage\');" placeholder="Verify Email" class="form_txtBox">';
+    echo "<br>";
+//    echo "</td></tr><tr><td>";
+
+    echo '<input type="email" required id="email" onchange="verifyFields(\'email\', \'email2\', \'emailMessage\');" name="email"' . (isset($_POST["email"])? ' value = "' . $_POST["email"] . '"' : "") . ' placeholder="Enter Email" class="form_txtBox">';
+//    echo "</td><td>";
+
+    echo '<input type="email" required id="email2" onchange="verifyFields(\'email\', \'email2\', \'emailMessage\');" placeholder="Verify Email" class="form_txtBox">';
 	echo '<span id="emailMessage"></span>';
-    echo "</td></tr><tr><td colspan=2>";
+    echo "<br>";
+//    echo "</td></tr><tr><td colspan=2>";
+
     echo '<input type="text" id="FLineAdd" name="address_line1"' . (isset($_POST["address_line1"])? ' value = "' . $_POST["address_line1"] . '"' : "") . ' placeholder="House Number" class="form_txtBox">';
-    echo "</td></tr><tr><td colspan=2>";
+    echo "<br>";
+//    echo "</td></tr><tr><td colspan=2>";
+
     echo '<input type="text" id="SLineAdd" name="address_line2"' . (isset($_POST["address_line2"])? ' value = "' . $_POST["address_line2"] . '"' : "") . ' placeholder="Street" class="form_txtBox">';
-    echo "</td><tr><tr><td colspan=2>";
+    echo "<br>";
+//    echo "</td><tr><tr><td colspan=2>";
+
     echo '<input type="text" id="TLineAddr" name="address_line3"' . (isset($_POST["address_line3"])? ' value = "' . $_POST["address_line3"] . '"' : "") . ' placeholder="Town or City" required class="form_txtBox">';
-    echo "</td></tr><tr><td colspan=2>";
+    echo "<br>";
+//    echo "</td></tr><tr><td colspan=2>";
+
 	echo '<input type="text" id="country" name="country"' . (isset($_POST["country"])? ' value = "' . $_POST["country"] . '"' : "") . ' placeholder="Country" class="form_txtBox">';
-	echo "</td></tr><tr><td colspan=2>";
-	echo '<input type="text" id="pcode" name="postcode"' . (isset($_POST["postcode"])? ' value = "' . $_POST["postcode"] . '"' : "") . ' placeholder="Enter Post Code" class="form_txtBox" max=9>';
-	echo "</td></tr><tr><td>";
+    echo "<br>";
+//	echo "</td></tr><tr><td colspan=2>";
+
+	echo '<input type="text" id="pcode" name="postcode"' . (isset($_POST["postcode"])? ' value = "' . $_POST["postcode"] . '"' : "") . ' placeholder="Enter Post Code" class="form_txtBox" maxlength=9>';
+    echo "<br>";
+//	echo "</td></tr><tr><td>";
+
 	echo '<input type="number" id="cardnumber" name="cardnumber" placeholder="credit card" class="form_txtBox" onblur="luhn_check()">';
 	echo '<span id="luhnMessage"></span>';
-	echo "</td><td>";
-    echo '<input type="date" id="dob" name="dob"' . (isset($_POST["dob"])? ' value="' . $_POST["dob"] . '"' : '') . ' placeholder="Enter Date of Birth" class="form_txtBox" onblur="ageVerification(this, \'dobSign\');">';
+//	echo "</td><td>";
+
+    echo '<input type="date" id="dob" name="dob"' . (isset($_POST["dob"])? ' value="' . $_POST["dob"] . '"' : '') . '  class="form_txtBox FloatRight" onblur="ageVerification(this, \'dobSign\');">';
     echo '<span id="dobSign"></span>';
-	echo "</td></tr>";
-	echo "</table>";
+    echo "<br>";
+//	echo "</td></tr>";
+//	echo "</table>";
+
 	echo '<p class="form_p">I agree to <a href="tandc.php" target="_blank">Terms and Conditions</a> <input type="checkbox" id="termsConditions" required></p>';
     echo '
-		<input type="submit"  class="btn" name="register" class="form_button" id="reg_button" disabled value="Click here to register">
+		<input type="submit" name="register" class="form_button btn" id="reg_button" disabled value="Click here to register">
 
-		<input type="reset"  class="btn" name="clear" class="form_button" id="clear_button" value="Restart your application form">
+		<input type="reset" name="clear" class="form_button btn" id="clear_button" value="Restart your application form">
 
 	</form>';
 	echo "</div>";
