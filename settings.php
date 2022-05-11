@@ -18,7 +18,6 @@ $inc_dir = "inc/";
 $img_dir = "img/";
 
 $home_page = "home_page.php";
-
 // login expire
 
 $cookie_time = time() + 3600;
@@ -30,13 +29,12 @@ $homepage_adverts = 10;
 // time to delete inactive accounts
 $expire_accounts = 15811200;
 
-// Email Settings (Future use for email validation)
+$min_password = 8;
+$uppercase_char_password = true;
+$lowercase_char_password = true;
+$special_char_password = true;
+$number_password = true;
 
-$title = "";
-
-$html_body = "";
-
-$sender = "";
-
+$search_description_char_size = 200;
 
 ?>
