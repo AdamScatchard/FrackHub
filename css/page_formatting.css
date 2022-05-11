@@ -2,14 +2,79 @@ body{
     margin:0;
     background: #EDE7DE;
 }
+
+#closeAccScreen h1, #closeAccScreen h3{
+    color: white;
+}
+
+#closeAccScreen{
+    display: none;
+    background: rgba(0,0,0,0.7);
+	position: fixed;
+	left: 0;
+	top: 0;
+	color: white;
+	font-size: 12pt;
+	text-align: center;
+    z-index: 99;
+}
+
 td.divider{
     border-left: 1px solid gray;
     padding: 20px;
     margin: 14px;
     width: 60%;
 }
+.altRowStyles tr:nth-child(even) {background: #CCC}
+.altRowStyles tr:nth-child(odd) {background: #FFF}
+div#contactForm{
+    display: inline-block;
+}
+
+#mobileTabs li {
+    float: left;
+    padding-right: 2em;
+    background: lightgray;
+    margin-right: 2px;
+    height: 2.5em;
+    line-height: 2.5em;
+    text-align: center;
+    width: 5em;
+    border-radius: 20px 20px 0 0;
+}
+.mailboxMobileTabs{
+    list-style: none;
+}
+.mailboxMobileTabs a{
+    text-decoration: none;
+}
+.active a{
+    color: white;
+}
+li.active {
+    background: green !important;
+    color: white;
+    text-align: center;
+}
+div#contactAddress {
+    display: inline-block;
+    margin-left: 20px;
+    border-left: 1px solid gray;
+    padding-left: 20px;
+}
+.loginMsg {
+    background: rgba(255,0,0,0.5);
+    color: white;
+    font-size: 1.2em;
+    padding: 5px;
+    margin: 5px;
+    border-radius: 5px;
+}
 .nobullets{
     list-style: none;
+}
+#mobileLogoutBtn{
+    display: none;
 }
 #adPreviewWindow{
     max-width: 60%;
@@ -39,7 +104,8 @@ main{
     padding: 5px;
     padding-bottom: 160px;
     min-height: 760px;
-    padding-top: 100px; 
+    padding-top: 100px;
+    background-image: url('../img/background2.png');
 }
 .column {
     float: left;
@@ -59,6 +125,12 @@ main{
 .textarea{
     height: 14em;
     width: 28em;
+}
+table {
+    border-collapse: collapse;
+}
+.search_results_line {
+    border-top: 1px solid black;
 }
 td.mailbox {
     background: white;
@@ -86,10 +158,21 @@ background: white;
  height: 300px;  
  border-radius: 10px 65px 10px 65px;
 }
+div#mobileSearchBar{
+    border: 2px solid #CBCAC9;
+    border-radius: 20px;
+    overflow: hidden;    
+}
+#searchDesktop{
+    border: none;   
+}
 div#searchBar {
     position: absolute;
     top: 2em;
     left: 32em;
+    border: 2px solid #CBCAC9;
+    border-radius: 20px;
+    overflow: hidden;
 }
 td.topalign {
     vertical-align: top;
@@ -112,6 +195,7 @@ div#carrusell {
     overflow: hidden;
     width: calc(100% - 40px);
     background-color: rgba(5, 109, 6, 0.3);
+    background: #A7C29D;
     padding: 10px;
     margin: 10px;
     border-radius: 30px 0 30px 0;
@@ -146,14 +230,23 @@ ul#menu {
     right: 1em;
     top: 0.5em;
 }
+#mobileMenu{
+    display:none;   
+}
+
 .banner{
     height: 15em;
+    margin-bottom: 3em;
 }
 .login_div{
     float: right;
 }
 .welcome_msg{
     float: left;
+    position: relative;
+    top: 5em;
+    left: 5em;
+    text-align: center;
 }
 .navbar li {
     list-style: none;
@@ -170,7 +263,7 @@ footer table td{
     vertical-align: top;
 }
 
-#signup {
+#signupDesktop, #signupMobile {
     background: white !important;
     color: black !important;
     border: 1px solid #649849;
@@ -198,9 +291,8 @@ table.advertTable {
     min-width: 10em;
 }
 .btn:disabled{
-    background: #C2C2C3;
+    background:#c0c0c0;
 }
-
 #loginForm input {
     border: 1px solid grey;
     border-radius: 12px;
@@ -218,6 +310,8 @@ table.advertTable {
 }
 .content{
     text-align: center;
+    display: inline-block;
+    width: 100%;
 }
 .icon{
     height: 32px;
@@ -240,7 +334,7 @@ table.advertTable {
     height: 1.5em;
     display: inline-block;
     line-height: 1.5;
-    padding: 0px 16px 0px 16px;
+    padding: 0px 13px 0px 13px;
     margin: 2px;
     border-radius: 18px;
 }
@@ -264,4 +358,324 @@ position: fixed;
     top: calc(50% - 15px);
     left: 0;
     margin-left: -15px;
+}
+.form_txtBox{
+    margin-bottom: 10px;
+    margin-right: 1em;
+}
+#mobileMenuLI{
+    display: none;
+}
+div#mobileMenu div#mobileMenuBts {
+    display: none;
+    height: 39px;
+}
+
+div#mobileMenuLI > div#mobileMenuBts {
+    display: none;
+}
+input#searchMobile {
+    padding-right: 37px;
+    width: 10.3em;
+    border: none;
+}
+    #searchDesktop{
+        border: none;
+    }
+    #mobileSearchIcon{
+        height: 20px;
+        float: right;
+        right: 6px;
+        top: 4px;
+    }
+    #desktopSearchIcon {
+        /*
+        position: absolute;
+        left: 160px;
+        top: 6px;
+        height: 20px;
+        */
+        position: relative;
+        height: 20px;
+        float: right;
+        right: 6px;
+        top: 4px;
+    }
+    #mailboxContainer {
+        float: left;
+        /* border: 1px solid gray; */
+        border-radius: 5px 5px 0 0;
+        width: 100%;
+        padding: 10px;
+        background: #eee;
+    }
+    div#mobileMailbox {
+        float: left;
+    }
+    div#mailboxMessage {
+        float: right;
+    }
+
+/*
+    Mobile phone alterations keyword: 'mobileview'
+*/
+@media screen and (max-width: 600px){
+    .contactContainer{
+        min-width: 340px;
+    }
+    img.menu_logo {
+        width: 210px;
+    }
+    .uidBar {
+        float: initial;
+        top: initial;
+    }
+    .mobilehide{
+        display: none;
+    }
+
+    li#mobileAdminBtn{
+        display: none!important;
+    }
+    div#contactAddress hr {
+        display: none;
+    }
+    input[type="image"] {
+        position: absolute;
+        left: 160px;
+        top: 6px;
+        height: 20px;
+    }
+    #mobileMenuLI{
+        display: inline-block;
+    }
+    #desktopFooter{
+        display: none;
+    }
+    div#contactAddress {
+        display: inline-block;
+        margin-left: initial;
+        border-left: initial;
+        padding-left: initial;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid grey;
+        width: 100%;
+    }
+    div#mobileMenuLI {
+       vertical-align: top;
+    }
+    
+    div#mobileMenuLi > div#mobileMenuBts {
+        position: absolute;
+        background: white;
+        height: 38px;
+        width: 100%;
+        left: 2px;
+        top: 124px;
+        height: 480px;
+    }
+    main{
+        padding-bottom: 200px;
+    }
+    div#mobileSearchBar {
+        display: inline;
+        position: absolute;
+    }    
+    #mobileMenu{
+        display: block;
+    }
+    .navbar a{
+        border-bottom: 1px solid grey;
+        display: block;
+        margin-bottom: 10px;
+        text-align: center;
+    }
+    
+    .btn{
+        min-width: 6em;
+    }
+    #mobileMenuLI ul {
+        text-align: center;
+    }
+    #mobileMenuLI li {
+        float: none;
+        height: 2em;
+        padding: 2em 0;
+        text-align: center;
+        width: 20em;
+    }
+    #mobileMenuLI a {
+        width: 50%;
+        margin-top: 2em;
+        height: 2em;
+        line-height: 2em;
+        font-size: 1.25em;
+        margin-left: 0;
+    }
+    input#search {
+        width: 9em;
+        margin-left: 2em;
+    }
+    .welcome_msg {
+        font-size: 0.8em;
+        text-align: center;
+        width: 100%;
+        left: initial;
+        top: initial;
+    }
+    login_div > input[type="text"]{
+        width: 15em;
+        right: 0;
+    }
+    div#carrusell{
+        border-radius: 12px;
+    }
+    .advert_image{
+        width: calc(100% - 10px);
+        text-align: center;
+        left: 5px;
+        top: 5px;
+        position: relative;
+        height: initial;
+    }
+    .img.advert_image_small{
+        width: 144px;
+        
+    }
+    td.homePageAdverts {
+        height: 110px;
+        vertical-align: top;
+    }
+    #loginForm{
+        width: 100%;
+        position: relative;
+        top: 0px;
+    }
+    #loginForm input {
+        width: 19em;
+    }
+    .login_div {
+        margin-bottom: 80px;
+    }
+    #searchBar{
+        display: none;
+    }
+    #desktopMenu{
+        display: none;
+    }
+    .MMbar1, .MMbar2, .MMbar3 {
+      width: 35px;
+      height: 5px;
+      background-color: #333;
+      margin: 6px 0;
+      transition: 0.4s;
+      border-radius: 10px;
+    }
+    
+    .MMcontainer {
+        display: inline-block;
+        cursor: pointer;
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+    
+    .change .MMbar1 {
+      -webkit-transform: rotate(-45deg) translate(-9px, 6px);
+      transform: rotate(-45deg) translate(-9px, 6px);
+    }
+    
+    .change .MMbar2 {opacity: 0;}
+    
+    .change .MMbar3 {
+      -webkit-transform: rotate(45deg) translate(-8px, -8px);
+      transform: rotate(45deg) translate(-8px, -8px);
+    }
+
+    .mobileMenu{
+        display: block;
+    }
+    main{
+        padding-top: 140px;
+    }
+
+    .FloatRight{
+        float: right;
+    }
+    
+    #mMenu a {
+        text-decoration: none;
+        background: #649849;
+        color: white;
+        font-family: arial;
+        height: 2em;
+        display: inline-block;
+        line-height: 2em;
+        padding: 0px 13px 0px 13px;
+        margin: 2px;
+        border-radius: 18px;
+        position: relative;
+        top: -18px;
+    }
+    .form_txtBox {
+        width: 11em;
+    }
+    
+    input#dob{
+        width: 8em;
+    }
+    .formtxtBox{
+        width: 11em;
+    }
+    a#mobileLogoutBtn {
+        background: #DC1A24;
+        text-decoration: none;
+        color: white;
+        font-family: arial;
+        height: 2em;
+        display: inline-block;
+        line-height: 2em;
+        padding: 0px 13px 0px 13px;
+        margin: 2px;
+        border-radius: 18px;
+    }
+    #desktopLogoutBtn{
+        display: none;
+    }
+}
+
+
+/*
+    Tablet alterations (or mobile landscape) keyword 'tabletview'
+*/
+@media screen and (max-width: 1023px){
+    div#searchBar {
+        left: 20em;
+        top: 1em;
+    }
+    ul#menu{
+        top: 2em;
+    }
+    form#register_form{
+        text-align: center;
+    }
+    .form_txtBox {
+        width: 13em;
+    }
+    
+    .FloatRight{
+        float: none;
+    }
+    #desktopFooter{
+        display: none;
+    }
+
+}
+/*
+    desktop alterations keyword 'desktopview'
+*/
+@media screen and (min-width: 1024px){
+    div#searchBar {
+        left: 21em;
+    }
 }
