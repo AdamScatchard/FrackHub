@@ -1,6 +1,6 @@
 <?php
 if (isset($_GET['id'])){
-    $profileID = $_GET['id'];
+    $profileID = $db->cleanSQLInjection($_GET['id']);
  //   if (is_int($profileID)){
         $user_data = $db->getRow("fh_users", "id=" . $profileID);
         if ($user_data){
@@ -49,13 +49,13 @@ if (isset($_GET['id'])){
             }
             if ($isAdmin==true || ($idChk==$profileID)){
                 echo "<form method='post' action='index.php?page=userprofile&id=" .  $profileID . "'>";
-                echo "<input type='submit' class='btn' value='Edit Profile' id='message' name='reply'>";
+                echo "<input type='submit' class='btn' value='Edit Profile'  name='reply'>";
                 echo "</form>";
             }
             if ($isAdmin){
                 echo "<form method='post' action='index.php?page=activitylogs'>";
                 echo "<input type='hidden' name='profileID' value='$profileID'>";
-                echo "<input type='submit' class='btn' value='View Activity' id='message' name='activity'>";
+                echo "<input type='submit' class='btn' value='View Activity'  name='activity'>";
                 echo "</form>";
             }
 
