@@ -153,8 +153,8 @@ function hideAndShowPreviewLabel(elID, item){
 	echo "<input type='checkbox'  onchange='hideAndShowPreviewLabel(\"collectionMsg\", this);' name='collection' class='checkboxes'>";
     echo "<p class='form_p'>Image:</p>";
     echo "<input type='file'  class='btn' name='fileToUpload' id='fileToUpload' accept='image/*' onchange='showPreview(event);'>";
-	echo "<input type='submit' class='btn' name='register' class='form_button' id='reg_button' value='Create Advert'>";
-	echo "<input type='reset'  class='btn' name='clear' class='form_button' id='clear_button' value='Clear'>";
+	echo "<input type='submit' name='register' class='form_button btn' id='reg_button' value='Create Advert'>";
+	echo "<input type='reset' name='clear' class='form_button btn' id='clear_button' value='Clear'>";
 	echo "</form>";
 	echo "</td>";
 	echo "</tr>";
@@ -167,8 +167,7 @@ function hideAndShowPreviewLabel(elID, item){
         echo "<td rowspan=10 class='adImageCell'>";
         echo "<img id='ad-preview' src='" . $img_dir . "noimage.jpg' alt='frackhub image' class='advert_image_small'>";
         echo "</td>";
-        echo "<td><h3 id='ad-name'></h3></td>";
-        echo "</td>";
+        echo "<td><h3 id='ad-name'>&nbsp;</h3></td>";
         echo "</tr>";
         echo "<tr>";
         echo "<td><h4>Description</h4></td>";
@@ -186,7 +185,7 @@ function hideAndShowPreviewLabel(elID, item){
         echo "</tr>";
         echo "<tr>";
         echo "<td >" . $user['address_line3'] . "</td>";
-        echo "</tr>";
+        echo "</tr><tr>";
         echo "<td><h4>Cost per day:</h4></td>";
         echo "</tr>";
         echo "<tr>";
@@ -194,9 +193,7 @@ function hideAndShowPreviewLabel(elID, item){
         echo "</tr>";
         echo "<tr>";
         echo "<td id='collectionMsg'></td>";
-        echo "<tr>";
+        echo "</tr>";
         echo "</table>";	
-	echo "</td>";
-	echo "</table>";
 	echo "</div>";
 ?>
