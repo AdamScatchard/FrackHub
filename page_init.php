@@ -23,19 +23,23 @@
 				$user_data = $db->getRow("fh_users", "id='" . $_COOKIE[$GLOBALS['login_cookie']] . "'");
 				
 				// create a string to be encrypted based on the user data, it used 2 timestamps (when the account was registered and when the user logged in)
-                $salted_key = $user_data['id'] . $user_data['password'] . $user_data['lastlogin_timestamp'] . $user_data['timestamp'];
-				
-				// Pass into encryption class
-				$enc->setPlainText(trim($salted_key));       
-                $session_Key = $enc->classRun();
-				
-				// obtain the cookie code generated at login and verify it matches what has just generated
-                $cookie_code = $_COOKIE[$GLOBALS['session_code']];
-
-                if ($session_Key == $cookie_code){
-					// A match! - The cookie has not been tampered with, return True to verify its authenticity
-                    return true;
-                }
+				if ($user_data){
+                    $salted_key = $user_data['id'] . $user_data['password'] . $user_data['lastlogin_timestamp'] . $user_data['timestamp'];
+    				
+    				// Pass into encryption class
+    				$enc->setPlainText(trim($salted_key));       
+                    $session_Key = $enc->classRun();
+    				
+    				// obtain the cookie code generated at login and verify it matches what has just generated
+                    $cookie_code = $_COOKIE[$GLOBALS['session_code']];
+    
+                    if ($session_Key == $cookie_code){
+    					// A match! - The cookie has not been tampered with, return True to verify its authenticity
+                        return true;
+                    }
+				}else{
+				    return false;
+				}
             }
         }
 		// Been unable to verify the cookie data, so access is not verified - return false
