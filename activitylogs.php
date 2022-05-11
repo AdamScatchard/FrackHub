@@ -17,9 +17,9 @@
 	echo "<td>Sel</td>";
 		echo "</tr>";
 	if (isset($_POST['profileID'])){
-    	$results = $db->query("activity", NULL, "userID=" . $_POST['profileID'], True, ["timestamp"=>"DESC"]);
+    	$results = $db->query("activity", NULL, "userID=" . $db->cleanSQLInjection($_POST['profileID']), True, ["timestamp"=>"DESC"]);
 	}else{
-    	$results = $db->query("activity", NULL, NULL, True, ["timestamp"=>"DESC"]);
+    	$results = $db->query("activity", NULL, NULL, True, ["timestamp"=>"DESC"], 100);
 	}
 	
     
