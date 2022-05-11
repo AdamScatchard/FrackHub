@@ -2,7 +2,7 @@
 // code by Adam Mackay
 class emailer{
 
-    function send_email($template_name = null, $user_data = null, $htmlMail = true){
+    function send_email($template_name = null, $user_data = null, $htmlMail = true, $parsedMessage = null){
         switch(strtolower($template_name)){
             case "registration":
                 $subject = "Registration to Frackhub Services";
@@ -26,6 +26,9 @@ class emailer{
                 break;
             case "credits":
                 $html = "no credit or statement template produced";
+                break;
+            case "sendmail":
+                $html = $parsedMessage;
                 break;
             case "statement":
                 $html = "no statement tempalte produced";
