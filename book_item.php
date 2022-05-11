@@ -21,7 +21,7 @@
 	}
 	
 	//taking all collumns since the variable is going to be used to revert any changes on errors
-	$original_adverts = $db->query("fh_adverts", NULL, "id = '" . $_POST["id"] . "'", true);
+	$original_adverts = $db->query("fh_adverts", NULL, "id = '" . $db->cleanSQLInjection($_POST["id"]) . "'", true);
 
 	if(!$original_adverts){
 		$msg = "Error, the item you're trying to book doesn't exist.";
@@ -57,7 +57,7 @@
 		}
 		
 		//updating the available field since it appeared available based on the previous check
-		$result = $db->update("fh_adverts", ["available" => 0], "id = '" . $_POST["id"] . "'");
+		$result = $db->update("fh_adverts", ["available" => 0], "id = '" . $db->cleanSQLInjection($_POST["id"]) . "'");
 
 		if(!$result){
 			echo("There has been an error while trying to update the database. Please notify an administrator. Error code 3");
@@ -70,7 +70,7 @@
 	$updated_advert = $original_advert;
 
 	//amount is definitely greater than 0 at this point
-	$updated_advert["amount_available"] = $updated_advert["amount_available"] - $_POST["amount_loaned"];
+	$updated_advert["amount_available"] = $updated_advert["amount_available"] - $db->cleanSQLInjection($_POST["amount_loaned"]);
 	
 	if($updated_advert["amount_available"] < 0){
 		$msg = "Error the item only has an amount of '" . $original_advert["amount_available"] . "' available.\nPlease input a lower number.";
@@ -80,14 +80,14 @@
 		$updated_advert["available"] = 0;
 	}
 
-	$result = $db->update("fh_adverts", $updated_advert, "id = '" . $_POST["id"] . "'");
+	$result = $db->update("fh_adverts", $updated_advert, "id = '" . $db->cleanSQLInjection($_POST["id"]) . "'");
 	
 	if(!$result){
 		$msg = "There has been an error while trying to book the item. Try again or speak with an administrator.";
 		goto exit_php;
 	}
 	
-	$result = $db->insert("fh_items_loaned", ["itemID" => $_POST["id"], "loanerID" => $uid, "amount_loaned" => $_POST["amount_loaned"], "timestamp" => time()]);
+	$result = $db->insert("fh_items_loaned", ["itemID" => $db->cleanSQLInjection($_POST["id"]), "loanerID" => $uid, "amount_loaned" => $db->cleanSQLInjection($_POST["amount_loaned"]), "timestamp" => time()]);
 	
 	if(!$result){
 		$msg = "There has been an error while trying to book the item. Try again or speak with an administrator.";
@@ -95,7 +95,7 @@
 		//the adverts have already been updated, and an error here means that the two tables are now out of sync
 		//so this is attempting to revert the previous update.
 		
-		$result = $db->update("fh_adverts", $original_advert, "id = '" . $_POST["id"] . "'");
+		$result = $db->update("fh_adverts", $original_advert, "id = '" . $db->cleanSQLInjection($_POST["id"]) . "'");
 	
 		//if this fails then the databases remain out of sync, which is bad
 		if(!$result){
